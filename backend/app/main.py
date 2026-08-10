@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.core.database import Base, engine
 from app import models  # noqa: F401  (register models on Base.metadata)
-from app.api.v1.routers import auth, dashboard, gateway, hardware, keys, logs, routes
+from app.api.v1.routers import auth, dashboard, gateway, hardware, keys, logs, mock_devices, routes
 
 logging.basicConfig(
     level=logging.INFO,
@@ -50,6 +50,7 @@ app.include_router(routes.router, prefix=api_prefix)
 app.include_router(keys.router, prefix=api_prefix)
 app.include_router(logs.router, prefix=api_prefix)
 app.include_router(gateway.router)  # uses its own /gateway/v1 prefix
+app.include_router(mock_devices.router)  # demo-only: simulated hardware
 
 
 @app.get("/api/v1/health", tags=["meta"])
