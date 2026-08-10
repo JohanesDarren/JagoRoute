@@ -37,6 +37,11 @@ HARDWARE_DEFS = {
         f"{MOCK_BASE}/camera",
         "IP camera stream API (mock device)",
     ),
+    # Real device placeholder — replace the IP:port with your mini weather station.
+    "weather_station": (
+        "http://192.168.1.100:8080",
+        "REPLACE base_url with real weather station IP:port",
+    ),
 }
 
 ROUTE_DEFS = {
@@ -52,6 +57,12 @@ ROUTE_DEFS = {
         "mappings": [
             {"name": "raspberry_pi_1", "target_path": "/stats", "method": "GET"},
             {"name": "ip_camera_1", "target_path": "/status", "method": "GET"},
+        ],
+    },
+    "weather": {
+        "description": "Mini weather station — wind direction, wind speed, etc.",
+        "mappings": [
+            {"name": "weather_station", "target_path": "/data", "method": "GET"},
         ],
     },
 }
