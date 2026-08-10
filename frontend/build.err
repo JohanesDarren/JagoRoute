@@ -1,0 +1,12 @@
+ ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\1. ASET JAGOAI\2. VIBE CODED\JagoRoute\frontend\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\1. ASET JAGOAI\2. VIBE CODED\JagoRoute\frontend\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+ ⨯ Failed to load SWC binary for win32/x64, see more info here: https://nextjs.org/docs/messages/failed-loading-swc
+
+> Build error occurred
+Error: Jest worker encountered 1 child process exceptions, exceeding retry limit
+    at ChildProcessWorker.initialize (D:\1. ASET JAGOAI\2. VIBE CODED\JagoRoute\frontend\node_modules\next\dist\compiled\jest-worker\index.js:1:11580)
+    at ChildProcessWorker._onExit (D:\1. ASET JAGOAI\2. VIBE CODED\JagoRoute\frontend\node_modules\next\dist\compiled\jest-worker\index.js:1:12545)
+    at ChildProcess.emit (node:events:520:35)
+    at ChildProcess._handle.onexit (node:internal/child_process:294:12) {
+  type: 'WorkerError'
+}

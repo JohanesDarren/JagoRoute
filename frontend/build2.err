@@ -1,0 +1,13 @@
+Failed to compile.
+
+./app/(dashboard)/hardware/page.tsx:49:7
+Type error: Type '"active" | "inactive"' is not assignable to type '"active"'.
+  Type '"inactive"' is not assignable to type '"active"'.
+
+[0m [90m 47 |[39m       description[33m:[39m h[33m.[39mdescription [33m?[39m[33m?[39m [32m""[39m[33m,[39m[0m
+[0m [90m 48 |[39m       auth_headers[33m:[39m [33mObject[39m[33m.[39mkeys(h[33m.[39mauth_headers)[33m.[39mlength [33m?[39m [33mJSON[39m[33m.[39mstringify(h[33m.[39mauth_headers[33m,[39m [36mnull[39m[33m,[39m [35m2[39m) [33m:[39m [32m""[39m[33m,[39m[0m
+[0m[31m[1m>[22m[39m[90m 49 |[39m       status[33m:[39m h[33m.[39mstatus[33m,[39m[0m
+[0m [90m    |[39m       [31m[1m^[22m[39m[0m
+[0m [90m 50 |[39m     })[33m;[39m[0m
+[0m [90m 51 |[39m     setOpen([36mtrue[39m)[33m;[39m[0m
+[0m [90m 52 |[39m   }[0m

@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: jagoroute-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jago
+      POSTGRES_PASSWORD: jago
+      POSTGRES_DB: jagoroute
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jago -d jagoroute"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: jagoroute-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: jagoroute-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg2://jago:jago@db:5432/jagoroute
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-secret-change-me-in-production}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      GATEWAY_TIMEOUT_SECONDS: ${GATEWAY_TIMEOUT_SECONDS:-3.0}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: jagoroute-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
