@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Waypoints, Copy, X, Check } from "lucide-react";
+import { Plus, Trash2, Waypoints, Copy, X, Check, ArrowRight, ExternalLink } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Modal from "@/components/Modal";
 import { api, ApiError } from "@/lib/api";
@@ -111,67 +111,107 @@ export default function RoutesPage() {
         }
       />
 
-      {error && <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {error && (
+        <div className="mb-4 rounded-lg border border-error-container/40 bg-error-container/20 px-3 py-2 text-sm text-error">
+          {error}
+        </div>
+      )}
 
       {routes.length === 0 ? (
-        <div className="card text-center text-sm text-slate-400">
+        <div className="card py-12 text-center text-sm text-on-surface-variant">
           No routes yet. Create one to expose a unified endpoint to your software team.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           {routes.map((r) => (
-            <div key={r.id} className="card">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-indigo-50 p-2 text-indigo-600">
+            <article
+              key={r.id}
+              className="overflow-hidden rounded-lg border border-outline-variant bg-surface-container-lowest"
+            >
+              {/* Card header */}
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-outline-variant bg-surface/50 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
                     <Waypoints className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800">/{r.route_path}</p>
-                    <p className="text-xs text-slate-400">
-                      {r.mappings.length} device(s) · {timeAgo(r.created_at)}
-                    </p>
+                    <h3 className="text-xl font-bold tracking-tight text-on-surface">/{r.route_path}</h3>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-primary-fixed" />
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">
+                        {r.mappings.length} device(s) · {timeAgo(r.created_at)}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => copyUrl(r.route_path)}
-                    className="btn-secondary text-xs"
+                    className="flex items-center gap-1.5 rounded border border-outline-variant px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary transition-colors hover:bg-surface-container"
                     title="Copy unified URL"
                   >
                     {copied === r.route_path ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      <Check className="h-4 w-4 text-primary" />
                     ) : (
-                      <Copy className="h-3.5 w-3.5" />
+                      <Copy className="h-4 w-4" />
                     )}
-                    Copy URL
+                    {copied === r.route_path ? "Copied" : "Copy URL"}
                   </button>
-                  <button onClick={() => remove(r)} className="btn-secondary text-red-600">
-                    <Trash2 className="h-4 w-4" />
+                  <button
+                    onClick={() => remove(r)}
+                    className="rounded p-1.5 text-on-surface-variant transition-colors hover:bg-error-container hover:text-error"
+                    title="Delete route"
+                  >
+                    <Trash2 className="h-5 w-5" />
                   </button>
                 </div>
               </div>
 
-              <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2">
-                <code className="text-xs break-all text-slate-600">
-                  {GATEWAY_URL}
-                  {r.route_path}
-                </code>
-              </div>
+              {/* Card body */}
+              <div className="flex flex-col gap-4 p-6">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">
+                    Gateway Endpoint
+                  </span>
+                  <div className="flex items-center justify-between gap-2 rounded border border-outline-variant/50 bg-surface-container px-4 py-3 font-mono text-[13px] text-on-surface">
+                    <span className="truncate">
+                      {GATEWAY_URL}
+                      {r.route_path}
+                    </span>
+                    <ExternalLink className="h-4 w-4 shrink-0 cursor-pointer text-outline transition-colors hover:text-secondary" />
+                  </div>
+                </div>
 
-              {r.mappings.length > 0 && (
-                <div className="mt-3 space-y-1">
-                  {r.mappings.map((m) => (
-                    <div key={m.id} className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className="badge bg-slate-100 text-slate-600">{m.method}</span>
-                      <span className="font-medium text-slate-700">{m.hardware.name}</span>
-                      <span className="text-slate-400">→</span>
-                      <code className="text-slate-500">{m.target_path}</code>
+                <div>
+                  <span className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">
+                    Upstream Mappings
+                  </span>
+                  {r.mappings.length > 0 ? (
+                    <div className="overflow-hidden rounded border border-outline-variant bg-surface-container-lowest">
+                      {r.mappings.map((m, i) => (
+                        <div
+                          key={m.id}
+                          className={`flex items-center gap-4 p-3 transition-colors hover:bg-surface ${
+                            i < r.mappings.length - 1 ? "border-b border-outline-variant" : ""
+                          }`}
+                        >
+                          <span className="rounded-sm bg-tertiary-container px-2 py-0.5 font-mono text-xs text-on-tertiary-container">
+                            {m.method}
+                          </span>
+                          <span className="flex-1 truncate text-sm text-on-surface">{m.hardware.name}</span>
+                          <ArrowRight className="h-4 w-4 shrink-0 text-outline-variant" />
+                          <span className="shrink-0 font-mono text-sm text-secondary">{m.target_path}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <div className="flex items-center justify-center rounded border border-outline-variant bg-surface-container-lowest py-6">
+                      <p className="text-sm text-outline">No upstream mappings configured yet.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            </article>
           ))}
         </div>
       )}
@@ -182,7 +222,7 @@ export default function RoutesPage() {
             <div>
               <label className="label">Route path</label>
               <input
-                className="input"
+                className="input font-mono"
                 required
                 value={routePath}
                 onChange={(e) => setRoutePath(e.target.value)}
@@ -209,7 +249,7 @@ export default function RoutesPage() {
             </div>
 
             {rows.length === 0 && (
-              <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-400">
+              <p className="rounded-lg bg-surface-container px-3 py-2 text-xs text-on-surface-variant">
                 No devices mapped. Add your hardware to this route.
               </p>
             )}
@@ -230,7 +270,7 @@ export default function RoutesPage() {
                     ))}
                   </select>
                   <input
-                    className="input w-32"
+                    className="input w-32 font-mono"
                     value={row.target_path}
                     onChange={(e) => updateRow(i, { target_path: e.target.value })}
                     placeholder="/temp"
@@ -249,7 +289,8 @@ export default function RoutesPage() {
                   <button
                     type="button"
                     onClick={() => setRows(rows.filter((_, idx) => idx !== i))}
-                    className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                    className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
+                    title="Remove mapping"
                   >
                     <X className="h-4 w-4" />
                   </button>

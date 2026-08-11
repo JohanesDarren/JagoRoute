@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Local single-tenant login (9router-style): the app auto-creates/syncs
+    # this account on start, and the UI only asks for the password.
+    # It points at the workspace account so all existing data stays visible.
+    ADMIN_EMAIL: str = "demo@jago.io"
+    ADMIN_PASSWORD: str = "123456"
+
     GATEWAY_TIMEOUT_SECONDS: float = 3.0
     GATEWAY_RATE_LIMIT_PER_MINUTE: int = 120
 

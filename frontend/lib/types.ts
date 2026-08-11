@@ -14,6 +14,7 @@ export interface Hardware {
   base_url: string;
   description: string | null;
   auth_headers: Record<string, string>;
+  query_params: Record<string, string>;
   status: "active" | "inactive";
   created_at: string;
 }
@@ -57,6 +58,24 @@ export interface RequestLog {
   created_at: string;
   route_path: string | null;
   api_key_name: string | null;
+}
+
+export interface RouteStat {
+  route_path: string;
+  count: number;
+  ok: number;
+  error: number;
+  avg_latency_ms: number;
+}
+
+export interface LogStats {
+  range_hours: number;
+  total_requests: number;
+  success_count: number;
+  error_count: number;
+  success_rate: number;
+  avg_latency_ms: number;
+  per_route: RouteStat[];
 }
 
 export interface DashboardStats {

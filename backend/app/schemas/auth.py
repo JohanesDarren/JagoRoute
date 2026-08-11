@@ -34,3 +34,8 @@ class TokenOut(BaseModel):
 
 class RefreshIn(BaseModel):
     refresh_token: str
+
+
+class LocalLoginIn(BaseModel):
+    """Password-only login for the locally-installed default admin account."""
+    password: str = Field(min_length=1, max_length=128)

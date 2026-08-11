@@ -23,6 +23,32 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     # MVP: create tables on startup. Alembic is wired for future migrations.
     Base.metadata.create_all(bind=engine)
+    # Self-healing schema guards for columns added after a table already exists
+    # (create_all does not ALTER existing tables). Idempotent.
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE hardware_endpoints ADD COLUMN IF NOT EXISTS query_params JSON"))
+
+    # 9router-style local install: the workspace account exists with the
+    # configured password so you can sign in with just the password (123456 by
+    # default, change via ADMIN_PASSWORD env / .env). The password is a local
+    # config value and is re-synced on every start — predictable for a
+    # single-tenant router, and it keeps all existing data visible.
+    from app.core.database import SessionLocal
+    from app.core.security import hash_password
+    from app.repositories import user_repo
+    from app.core.config import get_settings
+
+    _settings = get_settings()
+    with SessionLocal() as db:
+        admin = user_repo.get_by_email(db, _settings.ADMIN_EMAIL)
+        if admin is None:
+            admin = user_repo.create(db, _settings.ADMIN_EMAIL, hash_password(_settings.ADMIN_PASSWORD), "Local Admin")
+            logger.info("Created local admin account: %s (password %s)", _settings.ADMIN_EMAIL, _settings.ADMIN_PASSWORD)
+        else:
+            user_repo.update_password(db, admin, hash_password(_settings.ADMIN_PASSWORD))
+            logger.info("Local admin synced: %s (password %s)", _settings.ADMIN_EMAIL, _settings.ADMIN_PASSWORD)
+
     logger.info("JagoRoute started · tables ensured")
     yield
 

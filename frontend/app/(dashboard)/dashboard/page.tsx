@@ -24,6 +24,14 @@ import { api } from "@/lib/api";
 import type { DashboardStats } from "@/lib/types";
 import { fmtDate, timeAgo } from "@/lib/utils";
 
+const TOOLTIP_STYLE = {
+  backgroundColor: "#201d30",
+  border: "1px solid #434653",
+  borderRadius: "8px",
+  color: "#e5dffa",
+  fontSize: "12px",
+};
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,10 +45,12 @@ export default function DashboardPage() {
       <PageHeader title="Dashboard" subtitle="Your IoT routing workspace at a glance" />
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-lg border border-error-container/40 bg-error-container/20 px-3 py-2 text-sm text-error">
+          {error}
+        </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Hardware" value={stats?.total_hardware ?? "—"} icon={Cpu} accent="emerald" />
         <StatCard label="Routes" value={stats?.total_routes ?? "—"} icon={Waypoints} accent="indigo" />
         <StatCard label="Active API Keys" value={stats?.active_keys ?? "—"} icon={KeyRound} accent="amber" />
@@ -48,71 +58,82 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="card lg:col-span-1">
+        {/* Success rate chart */}
+        <div className="flex flex-col rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-card lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-800">Recent success rate</h3>
-            <RefreshCw
-              className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-600"
+            <h3 className="text-xl font-semibold text-on-surface">Recent success rate</h3>
+            <button
+              className="text-on-surface-variant transition-colors hover:text-primary"
               onClick={() => api<DashboardStats>("/dashboard/stats").then(setStats)}
-            />
+              title="Refresh"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
           </div>
           {stats && stats.recent_logs.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={buildChartData(stats.recent_logs)}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={28} />
-                <Tooltip />
-                <Bar dataKey="ok" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="error" stackId="a" fill="#f43f5e" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-56 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={buildChartData(stats.recent_logs)}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#434653" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#8d909f" }} axisLine={{ stroke: "#434653" }} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#8d909f" }} width={28} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "rgba(99,140,255,0.06)" }} />
+                  <Bar dataKey="ok" stackId="a" fill="#b4c5ff" />
+                  <Bar dataKey="error" stackId="a" fill="#ffb4ab" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
-            <p className="py-10 text-center text-sm text-slate-400">
+            <p className="py-16 text-center text-sm text-on-surface-variant">
               No gateway traffic yet. Create a route and copy an API key into your .env.
             </p>
           )}
         </div>
 
-        <div className="card lg:col-span-2">
-          <h3 className="mb-4 font-semibold text-slate-800">Recent requests</h3>
+        {/* Recent requests */}
+        <div className="flex flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-card">
+          <div className="border-b border-outline-variant bg-surface p-5">
+            <h3 className="text-xl font-semibold text-on-surface">Recent requests</h3>
+          </div>
           {stats && stats.recent_logs.length > 0 ? (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-400">
-                  <th className="py-2">Route</th>
-                  <th>Method</th>
-                  <th>Status</th>
-                  <th>Latency</th>
-                  <th>When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats.recent_logs.slice(0, 6).map((log) => (
-                  <tr key={log.id} className="border-b border-slate-100">
-                    <td className="py-2 font-medium text-slate-700">{log.route_path ?? "—"}</td>
-                    <td className="text-slate-500">{log.method}</td>
-                    <td>
-                      <span
-                        className={
-                          log.success
-                            ? "badge bg-emerald-50 text-emerald-600"
-                            : "badge bg-rose-50 text-rose-600"
-                        }
-                      >
-                        {log.success ? "200" : `ERR (${log.status_code})`}
-                      </span>
-                    </td>
-                    <td className="text-slate-500">{log.response_time_ms}ms</td>
-                    <td className="text-slate-400">{timeAgo(log.created_at)}</td>
+            <div className="flex-1 overflow-x-auto">
+              <table className="w-full border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-outline-variant bg-surface-container-low">
+                    <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-outline">Route</th>
+                    <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-outline">Method</th>
+                    <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-outline">Status</th>
+                    <th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-outline">When</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {stats.recent_logs.slice(0, 6).map((log) => (
+                    <tr key={log.id} className="border-b border-outline-variant transition-colors last:border-0 hover:bg-surface-container-low">
+                      <td className="max-w-[140px] truncate px-4 py-3 font-mono text-[13px] text-on-surface-variant">
+                        {log.route_path ?? "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="rounded bg-surface-container px-2 py-1 text-xs font-semibold text-on-surface">
+                          {log.method}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[13px]">
+                        <span className={log.success ? "text-primary" : "text-error"}>
+                          {log.success ? "200 OK" : `ERR (${log.status_code})`}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-xs text-on-surface-variant">
+                        {timeAgo(log.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <p className="py-10 text-center text-sm text-slate-400">
+            <p className="px-5 py-16 text-center text-sm text-on-surface-variant">
               No requests yet.{" "}
-              <Link href="/routes" className="font-semibold text-emerald-600 hover:underline">
+              <Link href="/routes" className="font-semibold text-primary hover:underline">
                 Build a route
               </Link>{" "}
               to get started.
@@ -121,7 +142,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <p className="mt-6 text-xs text-slate-400">
+      <p className="mt-5 text-right text-xs text-on-surface-variant">
         Last traffic: {stats?.recent_logs[0] ? fmtDate(stats.recent_logs[0].created_at) : "—"}
       </p>
     </div>

@@ -18,3 +18,11 @@ def create(db: Session, email: str, hashed_password: str, full_name: str | None)
     db.commit()
     db.refresh(user)
     return user
+
+
+def update_password(db: Session, user: User, hashed_password: str) -> User:
+    """Set the user's password hash (used by the local-install provisioning)."""
+    user.hashed_password = hashed_password
+    db.commit()
+    db.refresh(user)
+    return user

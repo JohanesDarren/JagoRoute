@@ -10,6 +10,7 @@ class HardwareCreate(BaseModel):
     base_url: str = Field(min_length=1, max_length=255)
     description: str | None = None
     auth_headers: dict[str, Any] | None = None
+    query_params: dict[str, Any] | None = None
     status: str = Field(default="active", pattern="^(active|inactive)$")
 
     @field_validator("base_url")
@@ -23,6 +24,7 @@ class HardwareUpdate(BaseModel):
     base_url: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = None
     auth_headers: dict[str, Any] | None = None
+    query_params: dict[str, Any] | None = None
     status: str | None = Field(default=None, pattern="^(active|inactive)$")
 
 
@@ -32,5 +34,6 @@ class HardwareOut(BaseModel):
     base_url: str
     description: str | None
     auth_headers: dict[str, Any]
+    query_params: dict[str, Any]
     status: str
     created_at: datetime

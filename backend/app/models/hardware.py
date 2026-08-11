@@ -20,6 +20,7 @@ class HardwareEndpoint(Base):
     base_url: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
     auth_headers: Mapped[dict | None] = mapped_column(JSON)
+    query_params: Mapped[dict | None] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(String(30), default="active", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -32,6 +33,7 @@ class HardwareEndpoint(Base):
             "base_url": self.base_url,
             "description": self.description,
             "auth_headers": self.auth_headers or {},
+            "query_params": self.query_params or {},
             "status": self.status,
             "created_at": self.created_at,
         }

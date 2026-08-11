@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>JagoRoute - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#2a273b",
+                        "on-surface": "#e5dffa",
+                        "on-secondary": "#351684",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#00256c",
+                        "primary-container": "#638cff",
+                        "tertiary-fixed-dim": "#cdc1e5",
+                        "inverse-on-surface": "#312e42",
+                        "surface-container-lowest": "#0e0c1e",
+                        "error": "#ffb4ab",
+                        "surface-dim": "#141124",
+                        "on-surface-variant": "#c3c6d6",
+                        "on-secondary-container": "#beadff",
+                        "on-primary-fixed": "#00174b",
+                        "on-tertiary-container": "#2e2642",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "tertiary-fixed": "#eaddff",
+                        "primary": "#b4c5ff",
+                        "tertiary-container": "#988caf",
+                        "surface-variant": "#353247",
+                        "on-secondary-fixed-variant": "#4c339b",
+                        "secondary": "#ccbeff",
+                        "outline-variant": "#434653",
+                        "inverse-primary": "#2656c7",
+                        "surface-container": "#201d30",
+                        "secondary-fixed": "#e7deff",
+                        "surface-container-highest": "#353247",
+                        "on-tertiary-fixed": "#1f1732",
+                        "on-primary": "#002a78",
+                        "secondary-fixed-dim": "#ccbeff",
+                        "surface-container-low": "#1c192c",
+                        "outline": "#8d909f",
+                        "background": "#141124",
+                        "on-tertiary-fixed-variant": "#4b4260",
+                        "on-background": "#e5dffa",
+                        "surface-tint": "#b4c5ff",
+                        "surface": "#141124",
+                        "surface-bright": "#3a374b",
+                        "primary-fixed": "#dbe1ff",
+                        "error-container": "#93000a",
+                        "inverse-surface": "#e5dffa",
+                        "tertiary": "#cdc1e5",
+                        "on-secondary-fixed": "#1f0060",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "secondary-container": "#4e359d",
+                        "on-error": "#690005",
+                        "on-tertiary": "#342c49"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-max": "1440px",
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-code": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-code": ["13px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-primary/20 to-background flex flex-col justify-center items-center p-4 font-body-sm text-on-background">
+<main class="w-full max-w-md bg-surface-container-lowest border border-outline-variant rounded-lg p-margin-desktop shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+<div class="flex flex-col items-center mb-8 relative z-10">
+<div class="h-12 w-12 bg-primary rounded-lg flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-on-primary font-headline-md text-headline-md" data-icon="route">route</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">JagoRoute</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">IoT API Router</p>
+</div>
+<form class="flex flex-col gap-4 relative z-10" onsubmit="event.preventDefault();">
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="email">Email Address</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-outline" data-icon="mail">mail</span>
+<input class="w-full pl-10 pr-3 py-2 bg-surface border border-outline-variant rounded focus:border-primary focus:ring-2 focus:ring-primary/50 transition-all font-body-sm text-body-sm text-on-surface placeholder-on-surface-variant/50 outline-none" id="email" placeholder="admin@jagoroute.io" type="email"/>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="password">Password</label>
+<a class="font-label-caps text-label-caps text-primary hover:text-primary-fixed transition-colors" href="#">Forgot?</a>
+</div>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-outline" data-icon="lock">lock</span>
+<input class="w-full pl-10 pr-10 py-2 bg-surface border border-outline-variant rounded focus:border-primary focus:ring-2 focus:ring-primary/50 transition-all font-body-sm text-body-sm text-on-surface placeholder-on-surface-variant/50 outline-none" id="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-3 text-outline hover:text-on-surface transition-colors focus:outline-none" onclick="togglePassword()" type="button">
+<span class="material-symbols-outlined" data-icon="visibility" id="toggle-icon">visibility</span>
+</button>
+</div>
+</div>
+<button class="w-full bg-primary hover:bg-primary-fixed text-on-primary font-body-lg text-body-lg py-3 px-4 rounded mt-4 flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.98] font-bold" type="submit">
+<span>Sign in</span>
+<span class="material-symbols-outlined" data-icon="login" style="font-variation-settings: 'FILL' 1;">login</span>
+</button>
+</form>
+<div class="mt-8 text-center relative z-10 border-t border-outline-variant pt-4">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                No account yet? <a class="text-primary font-bold hover:underline" href="#">Register</a>
+</p>
+</div>
+</main>
+<script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.textContent = 'visibility_off';
+                toggleIcon.setAttribute('data-icon', 'visibility_off');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.textContent = 'visibility';
+                toggleIcon.setAttribute('data-icon', 'visibility');
+            }
+        }
+    </script>
+</body></html>

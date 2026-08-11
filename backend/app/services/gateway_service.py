@@ -36,6 +36,7 @@ def _serialize_route(route: Route) -> dict:
                 "hardware_name": m.hardware.name,
                 "base_url": m.hardware.base_url,
                 "auth_headers": m.hardware.auth_headers or {},
+                "query_params": m.hardware.query_params or {},
                 "target_path": m.target_path,
                 "method": m.method,
             }
@@ -91,10 +92,12 @@ class GatewayService:
             async def call_one(mapping: dict) -> None:
                 url = f"{mapping['base_url']}{mapping['target_path']}"
                 headers = dict(mapping.get("auth_headers") or {})
+                params = dict(mapping.get("query_params") or {})
                 try:
                     response = await client.request(
                         mapping.get("method", "GET"),
                         url,
+                        params=params,
                         headers=headers,
                         content=body if body is not None else None,
                     )

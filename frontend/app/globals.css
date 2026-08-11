@@ -3,33 +3,115 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-background font-sans text-on-background antialiased;
+}
+
+::selection {
+  background: rgba(99, 140, 255, 0.35);
+  color: #ffffff;
+}
+
+/* Dark, subtle scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a273b transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2a273b;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #353247;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Loading skeleton shimmer */
+.skeleton {
+  animation: skeleton-loading 1.5s infinite linear;
+  background: linear-gradient(
+    90deg,
+    #1c192c 25%,
+    #353247 50%,
+    #1c192c 75%
+  );
+  background-size: 200% 100%;
+}
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Animated edge flow for the traffic node graph */
+.edge-flow {
+  stroke-dasharray: 5 9;
+  animation: dash-move 1.1s linear infinite;
+}
+@keyframes dash-move {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+/* New live log row entrance */
+.log-enter {
+  animation: log-enter 0.4s ease-out;
+}
+@keyframes log-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @layer components {
   .card {
-    @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm;
+    @apply rounded-xl border border-outline-variant bg-surface-container-lowest shadow-card;
   }
+
   .btn-primary {
-    @apply inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary hover:text-on-primary disabled:cursor-not-allowed disabled:opacity-50;
   }
+
   .btn-secondary {
-    @apply inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant bg-surface-container px-4 py-2 text-sm font-medium text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface;
   }
+
   .btn-danger {
-    @apply inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-error-container px-4 py-2 text-sm font-semibold text-on-error-container transition hover:bg-error hover:text-on-error;
   }
+
   .input {
-    @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100;
+    @apply w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none transition placeholder:text-outline focus:border-primary focus:ring-1 focus:ring-primary;
   }
+
   .label {
-    @apply mb-1 block text-sm font-medium text-slate-600;
+    @apply mb-1.5 block text-[11px] font-bold uppercase tracking-[0.08em] text-on-surface-variant;
   }
+
   .badge {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium;
   }
 }

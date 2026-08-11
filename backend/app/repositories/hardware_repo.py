@@ -29,6 +29,7 @@ def create(
     base_url: str,
     description: str | None,
     auth_headers: dict | None,
+    query_params: dict | None,
     status: str,
 ) -> HardwareEndpoint:
     endpoint = HardwareEndpoint(
@@ -37,6 +38,7 @@ def create(
         base_url=base_url,
         description=description,
         auth_headers=auth_headers,
+        query_params=query_params,
         status=status,
     )
     db.add(endpoint)
@@ -47,7 +49,7 @@ def create(
 
 def update(db: Session, endpoint: HardwareEndpoint, updates: dict) -> HardwareEndpoint:
     for key, value in updates.items():
-        if value is not None or key == "auth_headers":
+        if value is not None or key in ("auth_headers", "query_params"):
             setattr(endpoint, key, value)
     db.commit()
     db.refresh(endpoint)

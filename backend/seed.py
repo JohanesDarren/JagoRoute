@@ -3,10 +3,16 @@
 Run:  python seed.py            (uses DATABASE_URL / .env)
       docker compose exec backend python seed.py
 
+NOTE: seed.py is a FRESH-INSTALL bootstrap. It creates/updates by name and
+never deletes entries, so it does not migrate legacy renames (e.g. an old
+"weather_station" hardware or "weather" route will just stay around).
+
 Creates (idempotently):
-  * demo user  demo@jago.io / demo1234
+  * workspace user (default demo@jago.io / 123456, from ADMIN_* settings)
   * 3 hardware endpoints pointing at in-app mock devices (so routing "just works")
-  * two unified routes: "all-sensors" and "system-status"
+  * 1 Ecowitt weather station hardware (base_url only — credentials go in
+    "Query params" via the dashboard or scripts/update-ecowitt-route.sh)
+  * three unified routes: "all-sensors", "system-status", "weather_station_only"
   * one API key (printed at the end)
 """
 import uuid  # noqa: F401  (used by models at import time)
@@ -17,8 +23,11 @@ from app.core.security import hash_password
 from app.repositories import api_key_repo, hardware_repo, route_repo, user_repo
 from app.services import api_key_service
 
-DEMO_EMAIL = "demo@jago.io"
-DEMO_PASSWORD = "demo1234"
+from app.core.config import get_settings
+
+_settings = get_settings()
+DEMO_EMAIL = _settings.ADMIN_EMAIL
+DEMO_PASSWORD = _settings.ADMIN_PASSWORD
 
 # In-docker the backend reaches itself via the compose service name "backend".
 MOCK_BASE = "http://backend:8000/mock-devices"
@@ -37,10 +46,13 @@ HARDWARE_DEFS = {
         f"{MOCK_BASE}/camera",
         "IP camera stream API (mock device)",
     ),
-    # Real device placeholder — replace the IP:port with your mini weather station.
-    "weather_station": (
-        "http://192.168.1.100:8080",
-        "REPLACE base_url with real weather station IP:port",
+    # Ecowitt WS2320CE weather station. base_url is the API ROOT only — the
+    # gateway appends target_path (/device/real_time). Real credentials are
+    # added per-install via the dashboard (Hardware → Query params) or
+    # app_stasiun_mini/scripts/update-ecowitt-route.sh — never committed here.
+    "Weather Mini Station": (
+        "https://api.ecowitt.net/api/v3",
+        "Ecowitt WS2320CE — add lowercase query params application_key/api_key/mac",
     ),
 }
 
@@ -59,10 +71,10 @@ ROUTE_DEFS = {
             {"name": "ip_camera_1", "target_path": "/status", "method": "GET"},
         ],
     },
-    "weather": {
-        "description": "Mini weather station — wind direction, wind speed, etc.",
+    "weather_station_only": {
+        "description": "Ecowitt weather station — live readings via /device/real_time",
         "mappings": [
-            {"name": "weather_station", "target_path": "/data", "method": "GET"},
+            {"name": "Weather Mini Station", "target_path": "/device/real_time", "method": "GET"},
         ],
     },
 }
@@ -78,7 +90,7 @@ def _sync_hardware(db) -> dict[str, object]:
     for name, (base_url, desc) in HARDWARE_DEFS.items():
         hw = existing.get(name)
         if hw is None:
-            hw = hardware_repo.create(db, _demo_user_id(db), name, base_url, desc, {}, "active")
+            hw = hardware_repo.create(db, _demo_user_id(db), name, base_url, desc, {}, {}, "active")
             print(f"+ hardware: {name}")
         else:
             if hw.base_url != base_url or hw.description != desc:
@@ -137,7 +149,9 @@ def main() -> None:
             print("= api key exists (manage it in the dashboard)")
     finally:
         db.close()
-    print("\nSeed complete. Login: demo@jago.io / demo1234")
+    print("\nSeed complete. Login:")
+    print("  • Local app login (password only): 123456 (admin@jagoroute.io)")
+    print("  • Email login (demo workspace):    demo@jago.io / demo1234")
 
 
 if __name__ == "__main__":

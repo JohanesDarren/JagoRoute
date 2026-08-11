@@ -36,6 +36,26 @@ def login(db: Session, email: str, password: str) -> TokenOut:
     return _build_token_response(user)
 
 
+def local_login(db: Session, password: str) -> TokenOut:
+    """9router-style login: only the password is needed.
+
+    Authenticates against the single locally-provisioned admin account
+    (created on startup). Keeps the same user/workspace model under the hood.
+    """
+    from app.core.config import get_settings
+
+    email = get_settings().ADMIN_EMAIL
+    user = user_repo.get_by_email(db, email)
+    if user is None or not verify_password(password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid password.",
+        )
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled.")
+    return _build_token_response(user)
+
+
 def refresh(db: Session, refresh_token: str) -> TokenOut:
     subject = decode_token(refresh_token, expected_type="refresh")
     user = user_repo.get_by_id(db, subject) if subject else None

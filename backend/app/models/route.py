@@ -43,7 +43,7 @@ class RouteMapping(Base):
     hardware_id: Mapped[uuid.UUID] = mapped_column(
         UUIDType, ForeignKey("hardware_endpoints.id"), index=True, nullable=False
     )
-    target_path: Mapped[str] = mapped_column(String(100), nullable=False)
+    target_path: Mapped[str] = mapped_column(Text, nullable=False)
     method: Mapped[str] = mapped_column(String(10), default="GET", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

@@ -19,6 +19,7 @@ def create_endpoint(db: Session, user_id, payload: HardwareCreate) -> HardwareEn
         payload.base_url,
         payload.description,
         payload.auth_headers,
+        payload.query_params,
         payload.status,
     )
 

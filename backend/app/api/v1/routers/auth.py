@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.schemas.auth import RefreshIn, TokenOut, UserCreate, UserOut
+from app.schemas.auth import LocalLoginIn, RefreshIn, TokenOut, UserCreate, UserOut
 from app.api.v1.deps import get_current_user
 from app.models.user import User
 from app.services import auth_service
@@ -22,6 +22,12 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> TokenOut:
 @router.post("/login", response_model=TokenOut)
 def login(payload: UserCreate, db: Session = Depends(get_db)) -> TokenOut:
     return auth_service.login(db, payload.email, payload.password)
+
+
+@router.post("/local-login", response_model=TokenOut)
+def local_login(payload: LocalLoginIn, db: Session = Depends(get_db)) -> TokenOut:
+    """Password-only login for the default local admin account."""
+    return auth_service.local_login(db, payload.password)
 
 
 @router.post("/refresh", response_model=TokenOut)
