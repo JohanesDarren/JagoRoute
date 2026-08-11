@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     GATEWAY_TIMEOUT_SECONDS: float = 3.0
     GATEWAY_RATE_LIMIT_PER_MINUTE: int = 120
 
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,http://localhost:3002"
 
     @property
     def cors_origin_list(self) -> list[str]:
