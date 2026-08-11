@@ -16,6 +16,7 @@ node_modules/
 .next/
 out/
 dist/
+tsconfig.tsbuildinfo
 
 # IDE / OS
 .vscode/
