@@ -7,6 +7,20 @@ register raw device APIs, group them into unified **Routes**, and generate
 > **MVP scope (PRD v1.0):** Auth · Hardware API Registry · Route Builder ·
 > API-Keys · Request Logs · Workspace Dashboard.
 
+## JagoRoute vs 9router
+
+9router is an AI API gateway — it proxies requests to one LLM provider at a time.
+JagoRoute is an IoT hardware aggregator — it fans out to multiple devices and merges responses.
+
+| Feature | 9router | JagoRoute |
+|---|---|---|
+| Purpose | Route AI/LLM requests | Aggregate IoT hardware APIs |
+| Request flow | 1 → 1 (proxy) | 1 → N → 1 (fan-out + merge) |
+| Response | LLM response as-is | Merged JSON: all devices in one payload |
+| Error handling | Fail on provider error | Partial data: report what failed |
+| Auth model | API key → provider key | API key → JWT (JagoRoute owns the key) |
+| Caching | None | Route cache (Redis, 30s) |
+
 ## Architecture
 
 ```

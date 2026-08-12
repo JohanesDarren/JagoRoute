@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Waypoints, Copy, X, Check, ArrowRight, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Waypoints, Copy, X, Check, ArrowRight, ExternalLink, GitBranch } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Modal from "@/components/Modal";
 import { api, ApiError } from "@/lib/api";
 import type { Hardware, Route } from "@/lib/types";
-import { timeAgo } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 
 const GATEWAY_URL =
   (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1").replace("/api/v1", "") +
@@ -140,6 +140,17 @@ export default function RoutesPage() {
         }
       />
 
+      <div className="mb-4 flex items-start gap-3 rounded-lg border border-outline-variant bg-surface-container p-4">
+        <GitBranch className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <div>
+          <h4 className="text-[11px] font-bold uppercase tracking-[0.08em] text-on-surface">JagoRoute is an aggregator, not a proxy</h4>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            Routes with <strong>2+ devices</strong> fan out to all hardware simultaneously and merge responses.
+            Single-device routes act as a simple proxy — useful for hiding credentials from the consumer app.
+          </p>
+        </div>
+      </div>
+
       {error && (
         <div className="mb-4 rounded-lg border border-error-container/40 bg-error-container/20 px-3 py-2 text-sm text-error">
           {error}
@@ -166,9 +177,17 @@ export default function RoutesPage() {
                   <div>
                     <h3 className="text-xl font-bold tracking-tight text-on-surface">/{r.route_path}</h3>
                     <div className="mt-1 flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-primary-fixed" />
                       <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant">
                         {r.mappings.length} device(s) · {timeAgo(r.created_at)}
+                      </span>
+                      <span className={cn(
+                        "inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em]",
+                        r.mappings.length > 1
+                          ? "bg-primary-container/20 text-primary border border-primary-container/30"
+                          : "bg-tertiary-container/20 text-tertiary border border-tertiary-container/30"
+                      )}>
+                        {r.mappings.length > 1 ? <GitBranch className="h-3 w-3" /> : <ArrowRight className="h-3 w-3" />}
+                        {r.mappings.length > 1 ? "Aggregator" : "Proxy"}
                       </span>
                     </div>
                   </div>

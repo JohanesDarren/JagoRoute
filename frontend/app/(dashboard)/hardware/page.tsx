@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Cpu } from "lucide-react";
+import { Plus, Pencil, Trash2, Cpu, Waypoints, KeyRound, ArrowRight } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Modal from "@/components/Modal";
 import { api, ApiError } from "@/lib/api";
@@ -142,6 +142,19 @@ export default function HardwarePage() {
         }
       />
 
+      <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-outline-variant bg-surface-container p-4">
+        <div className="flex items-center gap-2 text-xs font-mono">
+          <span className="flex items-center gap-1.5 rounded bg-primary-container/20 px-2.5 py-1 font-semibold text-primary"><Cpu className="h-3.5 w-3.5" />Hardware</span>
+          <ArrowRight className="h-3 w-3 text-outline" />
+          <span className="flex items-center gap-1.5 rounded bg-secondary-container/20 px-2.5 py-1 font-semibold text-secondary"><Waypoints className="h-3.5 w-3.5" />Route</span>
+          <ArrowRight className="h-3 w-3 text-outline" />
+          <span className="flex items-center gap-1.5 rounded bg-tertiary-container/20 px-2.5 py-1 font-semibold text-tertiary"><KeyRound className="h-3.5 w-3.5" />Consumer App</span>
+        </div>
+        <span className="ml-auto hidden text-xs text-on-surface-variant sm:inline">
+          Register hardware → Group into routes → One .env key for the software team
+        </span>
+      </div>
+
       {error && (
         <div className="mb-4 rounded-lg border border-error-container/40 bg-error-container/20 px-3 py-2 text-sm text-error">
           {error}
@@ -195,6 +208,11 @@ export default function HardwarePage() {
                 <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant capitalize">
                   {h.status}
                 </span>
+                {h.base_url.includes('mock-devices') ? (
+                  <span className="rounded bg-tertiary-container/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-tertiary">Mock</span>
+                ) : (
+                  <span className="rounded bg-primary-container/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-primary">Live</span>
+                )}
               </div>
 
               {h.description && <p className="mb-3 text-sm text-on-surface-variant">{h.description}</p>}
