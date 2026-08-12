@@ -1,18 +1,26 @@
-# jagorouter
+# jagoroute
 
 One-command **JagoRoute** — self-host your own IoT API router locally.
 
 ```bash
-npx -y jagorouter
+npx -y jagoroute
 ```
 
 That's it. It clones the JagoRoute repo, starts the stack, and prints the URL.
+
+The `jagorouter` command is the global install form:
+
+```bash
+npm i -g jagoroute
+jagorouter            # start
+jagorouter stop       # stop the stack
+```
 
 ## Usage
 
 | Command | What it does |
 |---|---|
-| `npx -y jagorouter` | Clone (if needed) + start the stack (default) |
+| `npx -y jagoroute` | Clone (if needed) + start the stack (default) |
 | `jagorouter stop` | Stop the stack |
 | `jagorouter logs` | Follow backend logs |
 | `jagorouter status` | Show container status |

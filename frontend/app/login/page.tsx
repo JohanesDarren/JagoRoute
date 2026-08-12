@@ -12,8 +12,8 @@ const TABS = [
 ] as const;
 
 const INSTALL_CMD: Record<(typeof TABS)[number]["key"], string> = {
-  mac: "npx -y jagorouter",
-  win: "npx -y jagorouter",
+  mac: "npx -y jagoroute",
+  win: "npx -y jagoroute",
   docker: "git clone https://github.com/JohanesDarren/JagoRoute.git && cd JagoRoute && docker compose up -d --build",
 };
 

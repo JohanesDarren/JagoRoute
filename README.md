@@ -96,14 +96,15 @@ JagoRoute is one-command installable, 9router-style. The login page's
 
 | OS | Command |
 |---|---|
-| macOS / Linux / Windows | `npx -y jagorouter` |
+| macOS / Linux / Windows | `npx -y jagoroute` |
 | macOS / Linux (no Node) | `curl -s https://raw.githubusercontent.com/JohanesDarren/JagoRoute/main/frontend/public/install.sh \| bash` |
 | Windows (no Node) | `irm https://raw.githubusercontent.com/JohanesDarren/JagoRoute/main/frontend/public/install.ps1 \| iex` |
 | Any (manual) | `git clone https://github.com/JohanesDarren/JagoRoute.git && cd JagoRoute && docker compose up -d --build` |
 
-- **`npx -y jagorouter`** — tiny npm CLI (`jagorouter-cli/` in this repo):
+- **`npx -y jagoroute`** — tiny npm CLI (`jagorouter-cli/` in this repo):
   clones the repo, copies `.env.example` → `.env`, runs `docker compose up -d
-  --build`, prints the URL. Also `jagorouter stop | logs | status | update`.
+  --build`, prints the URL. Also `jagorouter stop | logs | status | update`
+  (install globally with `npm i -g jagoroute`).
 - The **installer scripts** check Docker + Git, clone the public repo, and start
   the stack the same way.
 - Either way, open **http://localhost:3000** → password **`123456`**. Fresh

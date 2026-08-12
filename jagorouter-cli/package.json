@@ -1,5 +1,5 @@
 {
-  "name": "jagorouter",
+  "name": "jagoroute",
   "version": "1.0.0",
   "description": "One-command JagoRoute — self-host your own IoT API router locally.",
   "keywords": [
