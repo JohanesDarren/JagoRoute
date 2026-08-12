@@ -2,8 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Route as RouteIcon, Lock, Eye, EyeOff, LogIn, ShieldCheck, Download, Copy, Check, Terminal } from "lucide-react";
+import { Route as RouteIcon, Lock, Eye, EyeOff, LogIn, ShieldCheck, Download, Copy, Check, Terminal, ChevronDown } from "lucide-react";
 import { api, setTokens, ApiError } from "@/lib/api";
+
+const TABS = [
+  { key: "mac", label: "macOS / Linux" },
+  { key: "win", label: "Windows" },
+  { key: "docker", label: "Docker" },
+] as const;
+
+const INSTALL_CMD: Record<(typeof TABS)[number]["key"], string> = {
+  mac: "curl -s https://route.jagoai.dev/install.sh | bash",
+  win: "irm https://route.jagoai.dev/install.ps1 | iex",
+  docker: "git clone https://github.com/JohanesDarren/JagoRoute.git && cd JagoRoute && docker compose up -d --build",
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,12 +24,12 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  const INSTALL_CMD = "git clone https://github.com/JohanesDarren/JagoRoute.git && cd JagoRoute && docker compose up -d";
+  const [tab, setTab] = useState<"mac" | "win" | "docker">("mac");
+  const [showInstall, setShowInstall] = useState(false);
 
   async function copyInstall() {
     try {
-      await navigator.clipboard.writeText(INSTALL_CMD);
+      await navigator.clipboard.writeText(INSTALL_CMD[tab]);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { /* clipboard blocked */ }
@@ -25,7 +37,7 @@ export default function LoginPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (loading) return; // guard against double-submit (seen as duplicate 401s)
+    if (loading) return;
     setError(null);
     setLoading(true);
     try {
@@ -100,42 +112,74 @@ export default function LoginPage() {
 
             <button type="submit" disabled={loading} className="btn-primary mt-2 w-full py-3 text-base font-bold">
               <LogIn className="h-5 w-5" />
-              {loading ? "Opening…" : "Open JagoRoute"}
+              {loading ? "Opening..." : "Open JagoRoute"}
             </button>
           </form>
 
           {/* Self-host / get your own */}
-          <div className="mt-6 rounded-lg border border-outline-variant bg-surface-container p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Download className="h-4 w-4 text-primary" />
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-on-surface">Get your own JagoRoute</h3>
-            </div>
-            <p className="text-xs text-on-surface-variant mb-3">
-              Run this on your own machine — one command. Your hardware, your routes, your keys.
-            </p>
-            <div className="relative rounded border border-outline-variant/50 bg-surface-container-lowest p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Terminal className="h-3.5 w-3.5 text-outline" />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-outline">Terminal</span>
+          <div className="mt-6">
+            <button
+              onClick={() => setShowInstall((v) => !v)}
+              className="flex w-full items-center justify-between rounded-lg border border-outline-variant bg-surface-container px-4 py-3 text-left transition-colors hover:bg-surface-container-high"
+            >
+              <div className="flex items-center gap-2">
+                <Download className="h-4 w-4 text-primary" />
+                <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-on-surface">Get your own JagoRoute</span>
               </div>
-              <code className="block text-xs text-on-surface break-all font-mono pr-14">
-                {INSTALL_CMD}
-              </code>
-              <button
-                onClick={copyInstall}
-                className="absolute right-2 top-2 rounded p-1.5 text-on-surface-variant transition-colors hover:text-primary"
-                title="Copy install command"
-              >
-                {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
-              </button>
-            </div>
-            <p className="mt-3 text-[10px] text-on-surface-variant">
-              <span className="text-primary font-semibold">Prerequisites:</span> Docker · Git
-              {" "}· Open{" "}
-              <code className="text-primary font-mono">http://localhost:3000</code>{" "}
-              after install. Default password:{" "}
-              <code className="text-primary font-mono">123456</code>
-            </p>
+              <ChevronDown className={`h-4 w-4 text-outline transition-transform ${showInstall ? "rotate-180" : ""}`} />
+            </button>
+
+            {showInstall && (
+              <div className="mt-3 rounded-lg border border-outline-variant bg-surface-container p-4">
+                <p className="text-xs text-on-surface-variant mb-3">
+                  Run this on your own machine — one command. Your hardware, your routes, your keys.
+                </p>
+
+                {/* Tabs */}
+                <div className="flex items-center rounded-lg bg-surface-container-lowest border border-outline-variant/50 p-0.5 mb-3">
+                  {TABS.map((t) => (
+                    <button
+                      key={t.key}
+                      onClick={() => { setTab(t.key); setCopied(false); }}
+                      className={`flex-1 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors ${
+                        tab === t.key
+                          ? "bg-surface-container-highest text-on-surface shadow-sm"
+                          : "text-on-surface-variant hover:text-on-surface"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Command block */}
+                <div className="relative rounded border border-outline-variant/50 bg-surface-container-lowest p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Terminal className="h-3.5 w-3.5 text-outline" />
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-outline">Terminal</span>
+                  </div>
+                  <code className="block text-xs text-on-surface break-all font-mono pr-14">
+                    {INSTALL_CMD[tab]}
+                  </code>
+                  <button
+                    onClick={copyInstall}
+                    className="absolute right-2 top-2 rounded p-1.5 text-on-surface-variant transition-colors hover:text-primary"
+                    title="Copy install command"
+                  >
+                    {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+
+                <p className="mt-3 text-[10px] text-on-surface-variant">
+                  <span className="text-primary font-semibold">Prerequisites:</span>{" "}
+                  {tab === "win" ? "Docker Desktop · Git for Windows" : "Docker · Git"}
+                  {" · "}Open{" "}
+                  <code className="text-primary font-mono">http://localhost:3000</code>{" "}
+                  after install. Default password:{" "}
+                  <code className="text-primary font-mono">123456</code>
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 flex items-center justify-center gap-1.5 border-t border-outline-variant pt-5 text-center">

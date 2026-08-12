@@ -63,11 +63,30 @@ cp .env.example .env
 # 2. Build & start postgres + redis + backend + frontend
 docker compose up --build
 
-# 3. Seed demo data (demo@jago.io / demo1234)
+# 3. Seed demo data
 docker compose exec backend python seed.py
 ```
 
-Open **http://localhost:3000** → log in → Hardware → Routes → API Keys.
+Open **http://localhost:3000** → password **`123456`** → Hardware → Routes → API Keys.
+
+## One-command install (self-host)
+
+JagoRoute is one-command installable, 9router-style. The login page has a
+**"Get your own JagoRoute"** section with these one-liners (installer scripts
+live in `frontend/public/` and are served by the frontend):
+
+| OS | Command |
+|---|---|
+| macOS / Linux | `curl -s https://route.jagoai.dev/install.sh \| bash` |
+| Windows (PowerShell) | `irm https://route.jagoai.dev/install.ps1 \| iex` |
+| Any (manual) | `git clone https://github.com/JohanesDarren/JagoRoute.git && cd JagoRoute && docker compose up -d` |
+
+Each installer checks Docker + Git, clones the public repo, copies
+`.env.example` → `.env`, and starts the stack (`docker compose up -d`). Then
+open **http://localhost:3000** → password **`123456`**.
+
+> To update the installers, just redeploy the frontend — they ship inside the
+> Next.js image (`public/` is copied by the Dockerfile).
 
 ## Local development (no Docker)
 
