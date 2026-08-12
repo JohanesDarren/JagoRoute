@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Route as RouteIcon, Lock, Eye, EyeOff, LogIn, ShieldCheck, Download, Copy, Check, Terminal, ChevronDown } from "lucide-react";
+import { Lock, Eye, EyeOff, LogIn, ShieldCheck, Download, Copy, Check, Terminal, ChevronDown } from "lucide-react";
 import { api, setTokens, ApiError } from "@/lib/api";
 
 const TABS = [
@@ -62,11 +62,17 @@ export default function LoginPage() {
 
         <div className="p-8">
           {/* Brand block */}
-          <div className="mb-8 flex items-center justify-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-container text-on-primary-container">
-              <RouteIcon className="h-[20px] w-[20px]" fill="currentColor" />
+          <div className="mb-8 flex flex-col items-center gap-3">
+            <div className="rounded-2xl bg-surface-container-lowest p-2 ring-1 ring-outline-variant/70 shadow-modal">
+              <img
+                src="/logo-sm.png"
+                alt="JagoRoute logo"
+                width={256}
+                height={256}
+                className="h-16 w-16 object-contain"
+              />
             </div>
-            <span className="text-xl font-bold text-primary">JagoRoute</span>
+            <span className="text-xl font-bold tracking-tight text-primary">JagoRoute</span>
           </div>
 
           {/* Header */}
