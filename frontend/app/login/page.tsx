@@ -17,7 +17,7 @@ const INSTALL_CMD: Record<(typeof TABS)[number]["key"], string> = {
   docker: "git clone https://github.com/JohanesDarren/JagoRoute.git && cd JagoRoute && docker compose up -d --build",
 };
 
-const NO_NODE_CMD: Record<string, string> = {
+const NO_NODE_CMD: Record<Exclude<(typeof TABS)[number]["key"], "docker">, string> = {
   mac: "curl -s https://raw.githubusercontent.com/JohanesDarren/JagoRoute/main/frontend/public/install.sh | bash",
   win: "irm https://raw.githubusercontent.com/JohanesDarren/JagoRoute/main/frontend/public/install.ps1 | iex",
 };

@@ -20,17 +20,39 @@ const os = require("os");
 const path = require("path");
 
 const REPO = "https://github.com/JohanesDarren/JagoRoute.git";
-const DIR =
-  process.env.JAGOROUTER_DIR ||
-  path.join(os.homedir(), "jagorouter");
+const HOME = os.homedir();
+let DIR;
 
 const CYAN = "\x1b[36m";
 const GREEN = "\x1b[32m";
 const RED = "\x1b[31m";
 const RESET = "\x1b[0m";
 
-function run(cmd) {
-  execSync(cmd, { stdio: "inherit", shell: true });
+function hasComposeFile(dir) {
+  return fs.existsSync(path.join(dir, "docker-compose.yml"));
+}
+
+/** Existing installs are probed so curl/ps1-installed users work too. */
+function findExistingDir() {
+  const candidates = [
+    process.cwd(),
+    path.join(process.cwd(), "JagoRoute"),
+    path.join(HOME, "jagorouter"),
+    path.join(HOME, "JagoRoute"),
+  ];
+  for (const c of candidates) {
+    if (hasComposeFile(c)) return c;
+  }
+  return null;
+}
+
+function resolveDir(forStart) {
+  if (process.env.JAGOROUTER_DIR) return process.env.JAGOROUTER_DIR;
+  if (!forStart) {
+    const found = findExistingDir();
+    if (found) return found;
+  }
+  return path.join(HOME, "jagorouter");
 }
 
 function sh(cmd) {
@@ -38,6 +60,40 @@ function sh(cmd) {
     return execSync(cmd, { encoding: "utf8", shell: true }).trim();
   } catch {
     return "";
+  }
+}
+
+function safePull() {
+  // Fresh clones have no tracking branch (pull always fails) — never abort.
+  try {
+    execSync("git pull --ff-only", { cwd: DIR, stdio: "inherit", shell: true });
+  } catch {
+    /* ignore: nothing to pull, or dirty tree */
+  }
+}
+
+function compose(args) {
+  try {
+    execSync(`docker compose ${args}`, { cwd: DIR, stdio: "inherit", shell: true });
+  } catch {
+    console.error(`${RED}✗ docker compose failed.${RESET}`);
+    console.error("  Check Docker is running and ports 3000/8000 are free.");
+    process.exit(1);
+  }
+}
+
+function checkPrereqs() {
+  if (!sh("docker --version")) {
+    console.error(
+      `${RED}✗ Docker is not installed or not in PATH.${RESET}\n  Install Docker Desktop: https://docs.docker.com/get-docker/`
+    );
+    process.exit(1);
+  }
+  if (!sh("docker compose version")) {
+    console.error(
+      `${RED}✗ docker compose plugin not found.${RESET}\n  Install: https://docs.docker.com/compose/install/`
+    );
+    process.exit(1);
   }
 }
 
@@ -55,88 +111,67 @@ function banner() {
   console.log("");
 }
 
-function hasComposeFile() {
-  return fs.existsSync(path.join(DIR, "docker-compose.yml"));
-}
-
-function ensureRepo() {
-  if (hasComposeFile()) return;
-  if (fs.existsSync(DIR) && fs.readdirSync(DIR).length > 0 && !hasComposeFile()) {
-    console.error(
-      `${RED}✗ ${DIR} exists but is not a JagoRoute checkout.${RESET}`
-    );
-    console.error("  Set JAGOROUTER_DIR to an empty/valid folder and retry.");
-    process.exit(1);
-  }
-  fs.mkdirSync(DIR, { recursive: true });
-  console.log(`→ Cloning JagoRoute into ${DIR} ...`);
-  run(`git clone "${REPO}" "${DIR}"`);
-}
-
-function ensureEnv() {
-  const envFile = path.join(DIR, ".env");
-  const example = path.join(DIR, ".env.example");
-  if (!fs.existsSync(envFile) && fs.existsSync(example)) {
-    fs.copyFileSync(example, envFile);
-  }
-}
-
-function checkPrereqs() {
-  const docker = sh("docker --version");
-  if (!docker) {
-    console.error(
-      `${RED}✗ Docker is not installed or not in PATH.${RESET}\n  Install Docker Desktop: https://docs.docker.com/get-docker/`
-    );
-    process.exit(1);
-  }
-  const compose = sh("docker compose version");
-  if (!compose) {
-    console.error(
-      `${RED}✗ docker compose plugin not found.${RESET}\n  Install: https://docs.docker.com/compose/install/`
-    );
-    process.exit(1);
-  }
-}
-
 const cmd = process.argv[2] || "start";
 
 switch (cmd) {
-  case "start":
+  case "start": {
     checkPrereqs();
-    ensureRepo();
-    ensureEnv();
-    console.log(`→ Starting JagoRoute in ${DIR} ...`);
-    run(`cd "${DIR}" && (git pull --ff-only 2>nul || git pull --ff-only 2>/dev/null || true) && docker compose up -d --build`);
+    DIR = resolveDir(true);
+    if (fs.existsSync(DIR) && fs.readdirSync(DIR).length > 0 && !hasComposeFile(DIR)) {
+      console.error(`${RED}✗ ${DIR} exists but is not a JagoRoute checkout.${RESET}`);
+      console.error("  Set JAGOROUTER_DIR to an empty/valid folder and retry.");
+      process.exit(1);
+    }
+    fs.mkdirSync(DIR, { recursive: true });
+    if (!hasComposeFile(DIR)) {
+      console.log(`→ Cloning JagoRoute into ${DIR} ...`);
+      execSync(`git clone "${REPO}" "${DIR}"`, { stdio: "inherit", shell: true });
+    } else {
+      console.log(`→ Found JagoRoute in ${DIR} ...`);
+    }
+    const envFile = path.join(DIR, ".env");
+    if (!fs.existsSync(envFile)) {
+      fs.copyFileSync(path.join(DIR, ".env.example"), envFile);
+    }
+    safePull();
+    console.log("→ Starting JagoRoute ...");
+    compose("up -d --build");
     banner();
     break;
+  }
   case "stop":
-    if (!hasComposeFile()) {
-      console.error(`${RED}✗ JagoRoute not installed in ${DIR}.${RESET}`);
+    DIR = resolveDir(false);
+    if (!hasComposeFile(DIR)) {
+      console.error(`${RED}✗ JagoRoute not installed (no docker-compose.yml found).${RESET}`);
       process.exit(1);
     }
-    run(`cd "${DIR}" && docker compose stop`);
+    compose("stop");
     break;
   case "logs":
-    if (!hasComposeFile()) {
-      console.error(`${RED}✗ JagoRoute not installed in ${DIR}.${RESET}`);
+    DIR = resolveDir(false);
+    if (!hasComposeFile(DIR)) {
+      console.error(`${RED}✗ JagoRoute not installed (no docker-compose.yml found).${RESET}`);
       process.exit(1);
     }
-    run(`cd "${DIR}" && docker compose logs -f`);
+    compose("logs -f");
     break;
   case "status":
-    if (!hasComposeFile()) {
-      console.error(`${RED}✗ JagoRoute not installed in ${DIR}.${RESET}`);
+    DIR = resolveDir(false);
+    if (!hasComposeFile(DIR)) {
+      console.error(`${RED}✗ JagoRoute not installed (no docker-compose.yml found).${RESET}`);
       process.exit(1);
     }
-    run(`cd "${DIR}" && docker compose ps`);
+    compose("ps");
     break;
   case "update":
     checkPrereqs();
-    if (!hasComposeFile()) {
-      console.error(`${RED}✗ JagoRoute not installed in ${DIR}.${RESET}`);
+    DIR = resolveDir(false);
+    if (!hasComposeFile(DIR)) {
+      console.error(`${RED}✗ JagoRoute not installed (no docker-compose.yml found).${RESET}`);
       process.exit(1);
     }
-    run(`cd "${DIR}" && git pull --ff-only && docker compose up -d --build`);
+    safePull();
+    compose("up -d --build");
     console.log(`${GREEN}✓ Updated.${RESET}`);
     break;
   case "help":
