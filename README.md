@@ -91,22 +91,23 @@ flushed too, so deleted routes vanish immediately.
 
 ## One-command install (self-host)
 
-JagoRoute is one-command installable, 9router-style. The login page has a
-**"Get your own JagoRoute"** section with these one-liners (installer scripts
-live in `frontend/public/` and are served by the frontend):
+JagoRoute is one-command installable, 9router-style. The login page's
+**"Get your own JagoRoute"** section shows these one-liners:
 
 | OS | Command |
 |---|---|
-| macOS / Linux | `curl -s https://route.jagoai.dev/install.sh \| bash` |
-| Windows (PowerShell) | `irm https://route.jagoai.dev/install.ps1 \| iex` |
-| Any (manual) | `git clone https://github.com/JohanesDarren/JagoRoute.git && cd JagoRoute && docker compose up -d` |
+| macOS / Linux / Windows | `npx -y jagorouter` |
+| macOS / Linux (no Node) | `curl -s https://raw.githubusercontent.com/JohanesDarren/JagoRoute/main/frontend/public/install.sh \| bash` |
+| Windows (no Node) | `irm https://raw.githubusercontent.com/JohanesDarren/JagoRoute/main/frontend/public/install.ps1 \| iex` |
+| Any (manual) | `git clone https://github.com/JohanesDarren/JagoRoute.git && cd JagoRoute && docker compose up -d --build` |
 
-Each installer checks Docker + Git, clones the public repo, copies
-`.env.example` → `.env`, and starts the stack (`docker compose up -d`). Then
-open **http://localhost:3000** → password **`123456`**.
-
-> To update the installers, just redeploy the frontend — they ship inside the
-> Next.js image (`public/` is copied by the Dockerfile).
+- **`npx -y jagorouter`** — tiny npm CLI (`jagorouter-cli/` in this repo):
+  clones the repo, copies `.env.example` → `.env`, runs `docker compose up -d
+  --build`, prints the URL. Also `jagorouter stop | logs | status | update`.
+- The **installer scripts** check Docker + Git, clone the public repo, and start
+  the stack the same way.
+- Either way, open **http://localhost:3000** → password **`123456`**. Fresh
+  installs start with an **empty workspace** (no demo data).
 
 ## Local development (no Docker)
 

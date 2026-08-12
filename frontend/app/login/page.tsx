@@ -12,9 +12,14 @@ const TABS = [
 ] as const;
 
 const INSTALL_CMD: Record<(typeof TABS)[number]["key"], string> = {
-  mac: "curl -s https://route.jagoai.dev/install.sh | bash",
-  win: "irm https://route.jagoai.dev/install.ps1 | iex",
+  mac: "npx -y jagorouter",
+  win: "npx -y jagorouter",
   docker: "git clone https://github.com/JohanesDarren/JagoRoute.git && cd JagoRoute && docker compose up -d --build",
+};
+
+const NO_NODE_CMD: Record<string, string> = {
+  mac: "curl -s https://raw.githubusercontent.com/JohanesDarren/JagoRoute/main/frontend/public/install.sh | bash",
+  win: "irm https://raw.githubusercontent.com/JohanesDarren/JagoRoute/main/frontend/public/install.ps1 | iex",
 };
 
 export default function LoginPage() {
@@ -178,12 +183,19 @@ export default function LoginPage() {
 
                 <p className="mt-3 text-[10px] text-on-surface-variant">
                   <span className="text-primary font-semibold">Prerequisites:</span>{" "}
-                  {tab === "win" ? "Docker Desktop · Git for Windows" : "Docker · Git"}
+                  Node.js · Docker · Git
                   {" · "}Open{" "}
                   <code className="text-primary font-mono">http://localhost:3000</code>{" "}
                   after install. Default password:{" "}
                   <code className="text-primary font-mono">123456</code>
                 </p>
+
+                {tab !== "docker" && (
+                  <p className="mt-2 text-[10px] text-on-surface-variant">
+                    No Node.js? Use{" "}
+                    <code className="break-all font-mono text-primary">{NO_NODE_CMD[tab]}</code>
+                  </p>
+                )}
               </div>
             )}
           </div>

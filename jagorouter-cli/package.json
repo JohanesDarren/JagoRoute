@@ -1,0 +1,24 @@
+{
+  "name": "jagorouter",
+  "version": "1.0.0",
+  "description": "One-command JagoRoute — self-host your own IoT API router locally.",
+  "keywords": [
+    "jagoroute",
+    "iot",
+    "router",
+    "api",
+    "self-hosted",
+    "docker"
+  ],
+  "license": "MIT",
+  "bin": {
+    "jagorouter": "cli.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "files": [
+    "cli.js",
+    "README.md"
+  ]
+}
