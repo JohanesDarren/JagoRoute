@@ -28,5 +28,5 @@ Thumbs.db
 # Logs & scratch
 *.log
 *.err
-logs/
+/logs/
 nginx_local/
