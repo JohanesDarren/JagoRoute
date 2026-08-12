@@ -380,7 +380,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       {/* ── Support Modal ────────────────────────────────────────────────── */}
       {supportOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-modal">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-modal">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-lg font-bold text-on-surface">Quick Start</h2>
               <button
