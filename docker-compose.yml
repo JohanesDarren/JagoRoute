@@ -37,6 +37,11 @@ services:
       DATABASE_URL: postgresql+psycopg2://jago:jago@db:5432/jagoroute
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-secret-change-me-in-production}
+      # Local password-only login (9router-style). Defaults are pinned here so
+      # the hosted deploy behaves identically to local: password is 123456
+      # unless explicitly overridden via .env / host env vars.
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-demo@jago.io}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-123456}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       GATEWAY_TIMEOUT_SECONDS: ${GATEWAY_TIMEOUT_SECONDS:-3.0}
     ports:
@@ -48,11 +53,20 @@ services:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        # Baked at BUILD time (Next inlines these) — "backend" is the compose
+        # service name reachable only inside the container network.
+        BACKEND_URL: ${BACKEND_URL:-http://backend:8000}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
     container_name: jagoroute-frontend
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      # Runtime env for ops/debugging (NOTE: Next inlines NEXT_PUBLIC_* and
+      # next.config.rewrites at build time — keep build args in sync).
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
     ports:
       - "3000:3000"
     depends_on:

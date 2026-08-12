@@ -1,4 +1,10 @@
 """Pytest fixtures: in-memory SQLite app harness with dependency overrides."""
+import os
+
+# Pin a deterministic signing secret for tests (avoids generating/persisting
+# a .jwt_secret file while the suite runs).
+os.environ.setdefault("JWT_SECRET_KEY", "test-secret-do-not-use-in-prod-0123456789abcdef")
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine

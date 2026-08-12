@@ -40,14 +40,37 @@ async def lifespan(app: FastAPI):
     from app.core.config import get_settings
 
     _settings = get_settings()
+    if not (_settings.ADMIN_PASSWORD or "").strip():
+        logger.warning(
+            "ADMIN_PASSWORD is empty — login would be impossible. Set ADMIN_PASSWORD in .env or host env."
+        )
+    elif _settings.ADMIN_PASSWORD == "123456":
+        logger.warning(
+            "ADMIN_PASSWORD is still the documented default (123456). Set a real password — "
+            "or ADMIN_ALLOW_DEFAULT_FALLBACK=false on a public host."
+        )
     with SessionLocal() as db:
-        admin = user_repo.get_by_email(db, _settings.ADMIN_EMAIL)
-        if admin is None:
-            admin = user_repo.create(db, _settings.ADMIN_EMAIL, hash_password(_settings.ADMIN_PASSWORD), "Local Admin")
-            logger.info("Created local admin account: %s (password %s)", _settings.ADMIN_EMAIL, _settings.ADMIN_PASSWORD)
+        # Sync target = ADMIN_EMAIL account, falling back to the oldest account
+        # (the data owner) so a mismatched ADMIN_EMAIL on a host can't strand
+        # your workspace. Same resolution as auth_service.local_login.
+        from app.services.auth_service import _resolve_workspace_user
+
+        workspace = _resolve_workspace_user(db)
+        if workspace is None:
+            workspace = user_repo.create(
+                db, _settings.ADMIN_EMAIL, hash_password(_settings.ADMIN_PASSWORD), "Local Admin"
+            )
+            logger.info("Created local admin account: %s", _settings.ADMIN_EMAIL)
         else:
-            user_repo.update_password(db, admin, hash_password(_settings.ADMIN_PASSWORD))
-            logger.info("Local admin synced: %s (password %s)", _settings.ADMIN_EMAIL, _settings.ADMIN_PASSWORD)
+            user_repo.update_password(db, workspace, hash_password(_settings.ADMIN_PASSWORD))
+            if workspace.email != _settings.ADMIN_EMAIL:
+                logger.warning(
+                    "ADMIN_EMAIL %s not found; using existing workspace account %s",
+                    _settings.ADMIN_EMAIL,
+                    workspace.email,
+                )
+            else:
+                logger.info("Local admin synced: %s", _settings.ADMIN_EMAIL)
 
     logger.info("JagoRoute started · tables ensured")
     yield

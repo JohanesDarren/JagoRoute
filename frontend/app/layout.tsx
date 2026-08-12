@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "JagoRoute — IoT API Router",
   description: "Collect, group and route IoT hardware APIs into unified endpoints.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

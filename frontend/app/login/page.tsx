@@ -14,6 +14,7 @@ export default function LoginPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return; // guard against double-submit (seen as duplicate 401s)
     setError(null);
     setLoading(true);
     try {

@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     JWT_SECRET_KEY: str = "dev-secret-change-me-in-production"
+    # Path where an auto-generated per-install secret is persisted when
+    # JWT_SECRET_KEY is unset or still the documented dev default. Keeps the
+    # hosted deploy secure-by-default even if the operator forgets to set it.
+    JWT_SECRET_FILE: str = ".jwt_secret"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -28,6 +32,12 @@ class Settings(BaseSettings):
     # It points at the workspace account so all existing data stays visible.
     ADMIN_EMAIL: str = "demo@jago.io"
     ADMIN_PASSWORD: str = "123456"
+
+    # The documented default password (123456) is always accepted as a
+    # fallback, so a hosting agent that overrides ADMIN_PASSWORD can never
+    # lock you out of your own router. Set to false to disable the fallback
+    # (e.g. on a shared/remote install where a strict password is required).
+    ADMIN_ALLOW_DEFAULT_FALLBACK: bool = True
 
     GATEWAY_TIMEOUT_SECONDS: float = 3.0
     GATEWAY_RATE_LIMIT_PER_MINUTE: int = 120

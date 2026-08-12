@@ -8,6 +8,12 @@ def get_by_email(db: Session, email: str) -> User | None:
     return db.scalar(select(User).where(User.email == email.lower()))
 
 
+def get_first_user(db: Session) -> User | None:
+    """Oldest account in the database — used as the workspace-owner fallback
+    for the local install when ADMIN_EMAIL isn't found on a given host."""
+    return db.scalar(select(User).order_by(User.created_at.asc()).limit(1))
+
+
 def get_by_id(db: Session, user_id) -> User | None:
     return db.get(User, user_id)
 

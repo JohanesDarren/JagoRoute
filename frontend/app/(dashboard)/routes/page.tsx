@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Waypoints, Copy, X, Check, ArrowRight, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Waypoints, Copy, X, Check, ArrowRight, ExternalLink } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Modal from "@/components/Modal";
 import { api, ApiError } from "@/lib/api";
@@ -23,6 +23,7 @@ export default function RoutesPage() {
   const [hardware, setHardware] = useState<Hardware[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Route | null>(null);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -45,9 +46,25 @@ export default function RoutesPage() {
   }, []);
 
   function openCreate() {
+    setEditing(null);
     setRoutePath("");
     setDescription("");
     setRows([]);
+    setError(null);
+    setOpen(true);
+  }
+
+  function openEdit(route: Route) {
+    setEditing(route);
+    setRoutePath(route.route_path);
+    setDescription(route.description ?? "");
+    setRows(
+      route.mappings.map((m) => ({
+        hardware_id: m.hardware.id,
+        target_path: m.target_path,
+        method: m.method,
+      }))
+    );
     setError(null);
     setOpen(true);
   }
@@ -66,18 +83,30 @@ export default function RoutesPage() {
     setError(null);
     const activeRows = rows.filter((r) => r.hardware_id && r.target_path);
     try {
-      await api("/routes", {
-        method: "POST",
-        body: JSON.stringify({
-          route_path: routePath,
-          description: description || null,
-          mappings: activeRows,
-        }),
-      });
+      if (editing) {
+        await api(`/routes/${editing.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ route_path: routePath, description: description || null }),
+        });
+        await api(`/routes/${editing.id}/mappings`, {
+          method: "PUT",
+          body: JSON.stringify(activeRows),
+        });
+      } else {
+        await api("/routes", {
+          method: "POST",
+          body: JSON.stringify({
+            route_path: routePath,
+            description: description || null,
+            mappings: activeRows,
+          }),
+        });
+      }
+      setEditing(null);
       setOpen(false);
       await load();
     } catch (e2) {
-      setError(e2 instanceof ApiError ? e2.message : "Failed to create route.");
+      setError(e2 instanceof ApiError ? e2.message : "Failed to save route.");
     } finally {
       setSaving(false);
     }
@@ -145,6 +174,13 @@ export default function RoutesPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openEdit(r)}
+                    className="rounded p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-secondary"
+                    title="Edit route"
+                  >
+                    <Pencil className="h-5 w-5" />
+                  </button>
                   <button
                     onClick={() => copyUrl(r.route_path)}
                     className="flex items-center gap-1.5 rounded border border-outline-variant px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-secondary transition-colors hover:bg-surface-container"
@@ -216,7 +252,7 @@ export default function RoutesPage() {
         </div>
       )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title="New route" wide>
+      <Modal open={open} onClose={() => setOpen(false)} title={editing ? "Edit route" : "New route"} wide>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
@@ -304,7 +340,7 @@ export default function RoutesPage() {
               Cancel
             </button>
             <button type="submit" disabled={saving} className="btn-primary">
-              {saving ? "Creating…" : "Create route"}
+              {saving ? "Saving…" : editing ? "Save changes" : "Create route"}
             </button>
           </div>
         </form>

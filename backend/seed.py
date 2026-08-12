@@ -12,7 +12,10 @@ Creates (idempotently):
   * 3 hardware endpoints pointing at in-app mock devices (so routing "just works")
   * 1 Ecowitt weather station hardware (base_url only — credentials go in
     "Query params" via the dashboard or scripts/update-ecowitt-route.sh)
-  * three unified routes: "all-sensors", "system-status", "weather_station_only"
+  * 2 BMKG open-data hardware (weather forecast + latest earthquake; the
+    weather one needs an adm4 region code added via Hardware → Query params)
+  * routes: "all-sensors", "system-status", "weather_station_only",
+    "bmkg-weather", "bmkg-gempa"
   * one API key (printed at the end)
 """
 import uuid  # noqa: F401  (used by models at import time)
@@ -54,6 +57,19 @@ HARDWARE_DEFS = {
         "https://api.ecowitt.net/api/v3",
         "Ecowitt WS2320CE — add lowercase query params application_key/api_key/mac",
     ),
+    # BMKG open data — official public API (no API key; credit "BMKG" in any UI).
+    # The weather hardware needs the region code: Hardware → Query params →
+    #   adm4 = <kemendagri kelurahan/desa code>
+    #   e.g. 31.71.03.1001 = Kemayoran (Jakarta Pusat)
+    #        32.04.12.2006 = Citeureup, Dayeuhkolot, Bandung (Telkom University)
+    "bmkg_weather": (
+        "https://api.bmkg.go.id/publik",
+        "BMKG open data - prakiraan cuaca. Set adm4 in Query params (sumber: BMKG)",
+    ),
+    "bmkg_gempa": (
+        "https://data.bmkg.go.id",
+        "BMKG open data - gempabumi terbaru (sumber: BMKG)",
+    ),
 }
 
 ROUTE_DEFS = {
@@ -75,6 +91,18 @@ ROUTE_DEFS = {
         "description": "Ecowitt weather station — live readings via /device/real_time",
         "mappings": [
             {"name": "Weather Mini Station", "target_path": "/device/real_time", "method": "GET"},
+        ],
+    },
+    "bmkg-weather": {
+        "description": "BMKG prakiraan cuaca — set adm4 (region) on bmkg_weather via Hardware → Query params (sumber: BMKG)",
+        "mappings": [
+            {"name": "bmkg_weather", "target_path": "/prakiraan-cuaca", "method": "GET"},
+        ],
+    },
+    "bmkg-gempa": {
+        "description": "BMKG latest earthquake (autogempa.json) — sumber: BMKG",
+        "mappings": [
+            {"name": "bmkg_gempa", "target_path": "/DataMKG/TEWS/autogempa.json", "method": "GET"},
         ],
     },
 }
