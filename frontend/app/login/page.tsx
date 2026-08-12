@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Route as RouteIcon, Lock, Eye, EyeOff, LogIn, ShieldCheck } from "lucide-react";
+import { Route as RouteIcon, Lock, Eye, EyeOff, LogIn, ShieldCheck, Download, Copy, Check, Terminal } from "lucide-react";
 import { api, setTokens, ApiError } from "@/lib/api";
 
 export default function LoginPage() {
@@ -11,6 +11,17 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const INSTALL_CMD = "git clone https://github.com/JohanesDarren/JagoRoute.git && cd JagoRoute && docker compose up -d";
+
+  async function copyInstall() {
+    try {
+      await navigator.clipboard.writeText(INSTALL_CMD);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* clipboard blocked */ }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -93,7 +104,41 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-8 flex items-center justify-center gap-1.5 border-t border-outline-variant pt-5 text-center">
+          {/* Self-host / get your own */}
+          <div className="mt-6 rounded-lg border border-outline-variant bg-surface-container p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Download className="h-4 w-4 text-primary" />
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-on-surface">Get your own JagoRoute</h3>
+            </div>
+            <p className="text-xs text-on-surface-variant mb-3">
+              Run this on your own machine — one command. Your hardware, your routes, your keys.
+            </p>
+            <div className="relative rounded border border-outline-variant/50 bg-surface-container-lowest p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Terminal className="h-3.5 w-3.5 text-outline" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-outline">Terminal</span>
+              </div>
+              <code className="block text-xs text-on-surface break-all font-mono pr-14">
+                {INSTALL_CMD}
+              </code>
+              <button
+                onClick={copyInstall}
+                className="absolute right-2 top-2 rounded p-1.5 text-on-surface-variant transition-colors hover:text-primary"
+                title="Copy install command"
+              >
+                {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+            <p className="mt-3 text-[10px] text-on-surface-variant">
+              <span className="text-primary font-semibold">Prerequisites:</span> Docker · Git
+              {" "}· Open{" "}
+              <code className="text-primary font-mono">http://localhost:3000</code>{" "}
+              after install. Default password:{" "}
+              <code className="text-primary font-mono">123456</code>
+            </p>
+          </div>
+
+          <div className="mt-6 flex items-center justify-center gap-1.5 border-t border-outline-variant pt-5 text-center">
             <ShieldCheck className="h-3.5 w-3.5 text-on-surface-variant" />
             <p className="text-xs text-on-surface-variant">
               Local install · default password{" "}
