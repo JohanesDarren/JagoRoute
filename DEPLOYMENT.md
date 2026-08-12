@@ -1,85 +1,80 @@
-# JagoRoute — Deployment Guide
+# JagoRoute — Deployment Guide (redeploy checklist)
 
-How to run JagoRoute in staging/production.
+How to deploy / re-deploy JagoRoute (frontend + backend) on a host.
 
 ## 1. Prerequisites
 
-- Docker + Docker Compose
-- A reachable network path to your IoT devices (same VPN, LAN, or public/tunneled
-  IPs). See Section 5 — Hardware reachability.
+- Docker + Docker Compose (v2) on the host
+- Ports free: **3000** (frontend), **8000** (backend), **5432** (Postgres), **6379** (Redis)
+- A reachable network path from the **backend container** to your IoT devices
+  (same LAN / VPN / tunnel). See §6.
 
-## 2. Configuration
-
-Copy `.env.example` → `.env` and set at minimum:
-
-| Variable | Production advice |
-|----------|-------------------|
-| `JWT_SECRET_KEY` | **Generate a strong random value** — never the default. |
-| `CORS_ORIGINS` | Comma-separated list of dashboard origins (e.g. `https://jago.internal`). |
-| `GATEWAY_TIMEOUT_SECONDS` | Keep `3.0` or lower to bound software response latency. |
-| `NEXT_PUBLIC_API_URL` | Public URL of the backend the browser can reach. |
-
-Generate a secret:
+## 2. One-command deploy (frontend + backend + db + redis)
 
 ```bash
-python -c "import secrets; print(secrets.token_urlsafe(48))"
+git pull                       # get latest main (must include everything)
+docker compose up -d --build   # build + start all services
+docker compose ps              # all 4 services should be healthy/running
 ```
 
-## 3. Build & run
+**No `.env` is required.** The frontend is built with relative URLs
+(`/api/v1`, `/gateway/v1`) that are proxied by Next.js to the backend, so the
+**same compose file works locally and on any domain**. Override only if you
+need a special public URL:
 
 ```bash
-docker compose up --build -d
-docker compose ps                 # all services healthy?
-docker compose exec backend python seed.py   # optional demo data
+# optional, only for custom setups:
+# docker compose build --build-arg NEXT_PUBLIC_GATEWAY_URL=https://your-domain/gateway/v1 frontend
 ```
 
-Health checks:
-- Backend: `GET /api/v1/health` → `{"status":"ok"}`
-- DB: `pg_isready` (compose healthcheck)
-- Redis: `redis-cli ping` (compose healthcheck)
+## 3. Verify after deploy
 
-## 4. Reverse proxy / TLS
+| Check | Expected |
+|---|---|
+| `curl -I https://<your-domain>/login` | `200` (login page with logo + install section) |
+| Login with password `123456` | Works (dashboard opens) |
+| `curl https://<your-domain>/api/v1/health` | `{"status":"ok",...}` |
+| `curl -I https://<your-domain>/install.sh` | `200` (one-command installer script) |
+| `curl https://<your-domain>/gateway/v1/<route>` + `Bearer jago_live_...` | JSON data (proxy works) |
+| Fresh workspace | 0 hardware / 0 routes / 0 keys (clean by design) |
 
-Put Nginx (or your edge) in front of the backend so the software team gets a clean
-public URL for `/gateway/v1/*`:
+## 4. Host-only items to check (known issues)
 
-```
-location /gateway/v1/ { proxy_pass http://backend:8000; }
-```
+1. **Root redirect 307 (route.jagoai.dev)** — the domain root currently returns a
+   `307` with **no Location header** (broken). It's a Cloudflare/edge rule, not
+   app code. Fix: remove/replace the redirect rule so `/` serves the app (or
+   redirects to `/login` with a valid Location).
+2. **Cloudflare caching** — `GET /logs*` already sends `Cache-Control: no-store`;
+   don't enable aggressive caching for `/api/*` or `/gateway/*`.
+3. **Optional hardening env** (in host `.env` or environment):
+   - `JWT_SECRET_KEY` — generate: `python -c "import secrets; print(secrets.token_urlsafe(48))"`
+   - `ADMIN_PASSWORD` — custom password (default + fallback is `123456`)
 
-Terminate TLS there. The dashboard and gateway should be served over HTTPS in
-production.
+## 5. Operations
 
-## 5. Hardware reachability (critical)
+- **Clean/reset a workspace** (keeps accounts, wipes hardware/routes/keys/logs):
+  ```bash
+  docker compose exec backend python reset_data.py
+  ```
+- **Demo data (optional)**: `docker compose exec backend python seed.py`
+- **Backups**: Postgres lives in the `pgdata` volume:
+  `docker run --rm -v jagoroute_pgdata:/data alpine tar cf - /data`
+- **Upgrades**: `git pull && docker compose up -d --build`
 
-The backend **fan-outs to your devices' IPs/URLs directly**. For this to work:
+## 6. Hardware reachability (critical)
 
-- Devices must be reachable from the **backend container** network (not the browser).
-- If devices are strictly local, connect the backend host to the same LAN/VPN, or
-  expose devices via a tunnel (ngrok/Cloudflare) and register those public URLs.
-- Firewall must allow egress from the backend to device ports.
-
-The router is resilient: a device that times out (3s) or refuses connection results
-in a `"partial": true` response, not a total failure.
-
-## 6. Operations
-
-- **Persistence:** Postgres data lives in the `pgdata` Docker volume. Back it up
-  with `docker run --rm -v jagoroute_pgdata:/data alpine tar cf - /data`.
-- **Upgrades / migrations:** MVP creates tables automatically. Once you add Alembic
-  migrations, run `docker compose exec backend alembic upgrade head` before
-  restarting.
-- **Key rotation:** Revoke leaked keys from the dashboard — revocations take effect
-  immediately (hash lookup).
-- **Observability:** Watch `docker compose logs backend` for gateway errors and
-  request-log failures.
+The backend fan-outs to device URLs **from the backend container** (not the
+browser). Devices must be reachable from that container's network, or exposed
+via tunnel (ngrok/Cloudflare) with those public URLs registered as
+`base_url`. A failing device yields `"partial": true`, not a total failure.
 
 ## 7. Troubleshooting
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Gateway returns `404` | Route path doesn't exist | Create the route in the dashboard |
-| Gateway returns `401` | Invalid/revoked API key | Check `Bearer jago_live_...` |
+| Gateway returns `404` | Route path doesn't exist | Create route in dashboard |
+| Gateway returns `401` | Invalid/revoked API key | Use valid `Bearer jago_live_...` |
 | Data shows `"unreachable"` | Backend can't reach device | Check backend↔device network / timeout |
-| Dashboard can't reach API | CORS or `NEXT_PUBLIC_API_URL` | Verify origins + env and rebuild frontend |
+| Dashboard API broken on host | Stale frontend build (old absolute `localhost` URLs) | Rebuild with latest code: `docker compose up -d --build frontend` |
+| Login rejected on host | Stale account hash | Use `123456` — login verifies against configured password, not the DB hash |
 | 429 on gateway | Rate limit hit | Raise `GATEWAY_RATE_LIMIT_PER_MINUTE` if legitimate |

@@ -58,17 +58,20 @@ services:
       args:
         # Baked at BUILD time (Next inlines these) — "backend" is the compose
         # service name reachable only inside the container network.
+        # Relative /api/v1 + /gateway/v1 are proxied through Next.js rewrites,
+        # so the SAME build works locally AND on a hosted domain with zero env
+        # overrides. Override only for special cases (e.g. a custom public URL).
         BACKEND_URL: ${BACKEND_URL:-http://backend:8000}
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
-        NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-http://localhost:8000/gateway/v1}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api/v1}
+        NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-/gateway/v1}
     container_name: jagoroute-frontend
     restart: unless-stopped
     environment:
       # Runtime env for ops/debugging (NOTE: Next inlines NEXT_PUBLIC_* and
       # next.config.rewrites at build time — keep build args in sync).
       BACKEND_URL: ${BACKEND_URL:-http://backend:8000}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
-      NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-http://localhost:8000/gateway/v1}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api/v1}
+      NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-/gateway/v1}
     ports:
       - "3000:3000"
     depends_on:

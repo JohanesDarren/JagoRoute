@@ -9,6 +9,13 @@ const nextConfig = {
         source: "/api/:path*",
         destination: `${backend}/api/:path*`,
       },
+      // Gateway is proxied same-origin too, so consumer apps can use the
+      // domain URL (e.g. https://route.jagoai.dev/gateway/v1/...) with no
+      // extra port exposure or CORS setup on the host.
+      {
+        source: "/gateway/:path*",
+        destination: `${backend}/gateway/:path*`,
+      },
     ];
   },
 };
