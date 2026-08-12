@@ -63,11 +63,31 @@ cp .env.example .env
 # 2. Build & start postgres + redis + backend + frontend
 docker compose up --build
 
-# 3. Seed demo data
+# 3. (optional) Seed demo data — a fresh install is otherwise EMPTY by design
 docker compose exec backend python seed.py
 ```
 
 Open **http://localhost:3000** → password **`123456`** → Hardware → Routes → API Keys.
+
+> **Clean by default:** the app never auto-creates demo data. A brand-new
+> install (`docker compose up -d`) gives you an empty workspace (0 hardware,
+> 0 routes, 0 keys) + your `123456` account — exactly the state the one-command
+> installer ships. Run `seed.py` only if you want demo data.
+
+## Reset workspace data (wipe everything, keep your account)
+
+```bash
+docker compose up -d --build backend   # once — ships reset_data.py into the image
+docker compose exec backend python reset_data.py
+```
+
+> The script ships inside the backend image, so any container built before
+> `reset_data.py` existed needs the one-time rebuild above.
+
+Deletes all hardware, routes, route mappings, API keys, and request logs —
+**user accounts are kept** (login/password still work). Use this before
+re-hosting or whenever you want a clean slate. The Redis route cache is
+flushed too, so deleted routes vanish immediately.
 
 ## One-command install (self-host)
 
