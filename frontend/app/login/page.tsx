@@ -34,7 +34,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-surface-container-highest p-4">
-      <div className="w-full max-w-[440px] overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-modal">
+      <div className="w-full max-w-[440px] 2xl:max-w-[480px] overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-modal">
         <div className="h-1 w-full bg-primary" />
 
         <div className="p-8">

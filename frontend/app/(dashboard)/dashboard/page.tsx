@@ -50,14 +50,14 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4">
         <StatCard label="Hardware" value={stats?.total_hardware ?? "—"} icon={Cpu} accent="emerald" />
         <StatCard label="Routes" value={stats?.total_routes ?? "—"} icon={Waypoints} accent="indigo" />
         <StatCard label="Active API Keys" value={stats?.active_keys ?? "—"} icon={KeyRound} accent="amber" />
         <StatCard label="Requests (24h)" value={stats?.total_requests_24h ?? "—"} icon={Activity} accent="sky" />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3 2xl:grid-cols-3">
         {/* Success rate chart */}
         <div className="flex flex-col rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-card lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">

@@ -162,7 +162,7 @@ export default function HardwarePage() {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {[0, 1, 2].map((i) => (
             <div key={i} className="rounded-lg border border-outline-variant bg-surface-container-lowest p-4">
               <div className="mb-3 h-9 w-9 rounded skeleton" />
@@ -177,7 +177,7 @@ export default function HardwarePage() {
           No hardware yet. Add your first device API to start routing.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {items.map((h) => (
             <div
               key={h.id}

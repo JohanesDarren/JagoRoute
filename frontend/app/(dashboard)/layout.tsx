@@ -163,7 +163,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   return (
     <div className="flex min-h-screen bg-background">
       {/* Sidebar (desktop) */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[240px] flex-col border-r border-outline-variant bg-surface-container-lowest md:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[240px] 2xl:w-[260px] flex-col border-r border-outline-variant bg-surface-container-lowest md:flex">
         <div className="flex h-full flex-col justify-between py-8">
           <div>
             {/* Brand */}
@@ -229,7 +229,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       </aside>
 
       {/* Main column */}
-      <main className="flex min-h-screen w-full flex-col md:ml-[240px]">
+      <main className="flex min-h-screen w-full flex-col md:ml-[240px] 2xl:ml-[260px]">
         {/* Top app bar */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-outline-variant bg-surface px-5 md:px-8">
           <div className="flex items-center gap-2.5 md:hidden">
@@ -350,7 +350,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-[1200px] flex-1 p-5 pb-24 md:p-8 md:pb-8">{children}</div>
+        <div className="mx-auto w-full max-w-[1200px] 2xl:max-w-[1600px] flex-1 p-5 pb-24 md:p-8 md:pb-8">{children}</div>
       </main>
 
       {/* Mobile bottom navigation */}
