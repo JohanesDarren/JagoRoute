@@ -9,8 +9,8 @@ import type { Hardware, Route } from "@/lib/types";
 import { cn, timeAgo } from "@/lib/utils";
 
 const GATEWAY_URL =
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1").replace("/api/v1", "") +
-  "/gateway/v1/";
+  process.env.NEXT_PUBLIC_GATEWAY_URL ||
+  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1").replace("/api/v1", "") + "/gateway/v1/";
 
 interface Row {
   hardware_id: string;
