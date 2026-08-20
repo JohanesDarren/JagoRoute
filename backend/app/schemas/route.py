@@ -9,7 +9,10 @@ PATH_RE = re.compile(r"^[a-zA-Z0-9\-_/]+$")
 
 class MappingIn(BaseModel):
     hardware_id: str
-    target_path: str = Field(min_length=1, max_length=100)
+    # target_path is OPTIONAL: when the hardware base_url already contains the
+    # full endpoint (e.g. https://host/api/sensor/latest), an empty target_path
+    # tells the gateway to call base_url exactly as stored — no suffix appended.
+    target_path: str = Field(default="", min_length=0, max_length=200)
     method: str = Field(default="GET", pattern="^(GET|POST|PUT|PATCH|DELETE)$")
 
 

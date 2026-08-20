@@ -90,7 +90,13 @@ class GatewayService:
 
         async with self._client() as client:
             async def call_one(mapping: dict) -> None:
-                url = f"{mapping['base_url']}{mapping['target_path']}"
+                # Use the EXACT URL stored by the user. base_url may already
+                # contain the full endpoint path (e.g. .../api/sensor/latest);
+                # target_path is an OPTIONAL relative suffix — never append
+                # anything when it is empty, and never inject "/data".
+                base_url = (mapping["base_url"] or "").rstrip("/")
+                target_path = (mapping.get("target_path") or "").strip()
+                url = f"{base_url}{target_path if target_path.startswith('/') else '/' + target_path}" if target_path else base_url
                 headers = dict(mapping.get("auth_headers") or {})
                 params = dict(mapping.get("query_params") or {})
                 try:

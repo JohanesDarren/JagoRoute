@@ -78,16 +78,16 @@ check "Created API key for gateway" "$([ -n "$API_KEY" ] && echo 0 || echo 1)"
 GW_HEADER="Authorization: Bearer $API_KEY"
 
 # 8. Gateway call
-echo "8. Gateway: all-sensors..."
-GW_RESP=$(curl -s -w "\n%{http_code}" "$GW/all-sensors" -H "$GW_HEADER" 2>/dev/null || echo "")
+echo "8. Gateway: soil-npk..."
+GW_RESP=$(curl -s -w "\n%{http_code}" "$GW/soil-npk" -H "$GW_HEADER" 2>/dev/null || echo "")
 GW_HTTP=$(echo "$GW_RESP" | tail -1)
 GW_BODY=$(echo "$GW_RESP" | sed '$d')
 GW_STATUS=$(echo "$GW_BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || true)
 check "Gateway returns success ($GW_STATUS)" "$([ "$GW_STATUS" = "success" ] && echo 0 || echo 1)"
 
-# 9. Verify gateway data has multiple devices
+# 9. Verify gateway data has at least one device
 GW_DATA_COUNT=$(echo "$GW_BODY" | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('data',{})))" 2>/dev/null || echo "0")
-check "Gateway aggregated $GW_DATA_COUNT devices" "$([ "$GW_DATA_COUNT" -ge 2 ] && echo 0 || echo 1)"
+check "Gateway aggregated $GW_DATA_COUNT devices" "$([ "$GW_DATA_COUNT" -ge 1 ] && echo 0 || echo 1)"
 
 # 10. Request logs
 echo "9. Request logs..."

@@ -70,7 +70,7 @@ export default function RoutesPage() {
   }
 
   function addRow() {
-    setRows([...rows, { hardware_id: hardware[0]?.id ?? "", target_path: "/data", method: "GET" }]);
+    setRows([...rows, { hardware_id: hardware[0]?.id ?? "", target_path: "", method: "GET" }]);
   }
 
   function updateRow(i: number, patch: Partial<Row>) {
@@ -81,7 +81,7 @@ export default function RoutesPage() {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const activeRows = rows.filter((r) => r.hardware_id && r.target_path);
+    const activeRows = rows.filter((r) => r.hardware_id);
     try {
       if (editing) {
         await api(`/routes/${editing.id}`, {
@@ -255,7 +255,9 @@ export default function RoutesPage() {
                           </span>
                           <span className="flex-1 truncate text-sm text-on-surface">{m.hardware.name}</span>
                           <ArrowRight className="h-4 w-4 shrink-0 text-outline-variant" />
-                          <span className="shrink-0 font-mono text-sm text-secondary">{m.target_path}</span>
+                          <span className="shrink-0 font-mono text-sm text-secondary" title="URL the gateway will call">
+                            {m.target_path ? m.hardware.base_url + m.target_path : m.hardware.base_url}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -302,6 +304,10 @@ export default function RoutesPage() {
                 <Plus className="h-3.5 w-3.5" /> Add device
               </button>
             </div>
+            <p className="mb-2 text-[11px] text-on-surface-variant">
+              Leave the target path <em>blank</em> when the hardware base URL already contains the full endpoint —
+              the gateway calls it exactly as stored.
+            </p>
 
             {rows.length === 0 && (
               <p className="rounded-lg bg-surface-container px-3 py-2 text-xs text-on-surface-variant">
@@ -325,10 +331,11 @@ export default function RoutesPage() {
                     ))}
                   </select>
                   <input
-                    className="input w-32 font-mono"
+                    className="input w-40 font-mono"
                     value={row.target_path}
                     onChange={(e) => updateRow(i, { target_path: e.target.value })}
-                    placeholder="/temp"
+                    placeholder="/temp (blank = base_url)"
+                    title="Optional path appended to the base URL — leave blank to call the base URL exactly as stored"
                   />
                   <select
                     className="input w-28"

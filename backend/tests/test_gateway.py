@@ -5,7 +5,7 @@ from httpx import AsyncClient, MockTransport, Response
 from app.api.v1.routers.gateway import get_gateway_service
 from app.main import app
 from app.services.gateway_service import GatewayService
-from tests.conftest import create_hardware, create_route, register_user
+from tests.conftest import auth_headers, create_hardware, create_route, register_user
 
 
 def _mock_transport(handler):
@@ -93,6 +93,53 @@ async def test_gateway_partial_failure(client: AsyncClient, db):
         assert resp.status_code == 200
         # Aggregation still returns 200 with a partial flag rather than failing the whole request
         assert resp.json()["status"] == "success"
+    finally:
+        app.dependency_overrides.pop(get_gateway_service, None)
+
+
+@pytest.mark.anyio
+async def test_gateway_exact_url_no_data_suffix(client: AsyncClient, db):
+    """Regression: base_url may hold the FULL endpoint (e.g. .../api/sensor/latest).
+    An empty target_path must NOT cause the gateway to append '/data' — it must
+    call base_url exactly as stored."""
+    seen: list[str] = []
+
+    def exact_url_handler(request):
+        seen.append(str(request.url))
+        # Any path the gateway asks for returns 200 — the assertion below
+        # checks the EXACT URL that was requested, so no /data sneaks in.
+        return Response(200, json={"success": True, "data": {"npk": 12}})
+
+    app.dependency_overrides[get_gateway_service] = lambda: GatewayService(
+        transport=_mock_transport(exact_url_handler), timeout=3.0
+    )
+    try:
+        tokens = await register_user(client)
+        npk = await create_hardware(
+            client, tokens, name="soil_npk_sensor",
+            base_url="https://api-soilsensor1.kolab.top/api/sensor/latest",
+        )
+        resp = await client.post(
+            "/api/v1/routes",
+            json={
+                "route_path": "soil-npk",
+                "description": "soil sensor",
+                "mappings": [{"hardware_id": npk["id"], "target_path": "", "method": "GET"}],
+            },
+            headers=auth_headers(tokens),
+        )
+        assert resp.status_code == 201, resp.text
+        key = (await client.post("/api/v1/keys", json={"name": "test"}, headers=auth_headers(tokens))).json()
+
+        resp = await client.get(
+            "/gateway/v1/soil-npk", headers={"Authorization": f"Bearer {key['key']}"}
+        )
+        assert resp.status_code == 200
+        payload = resp.json()
+        assert payload["status"] == "success"
+        assert payload["data"]["soil_npk_sensor"]["status_code"] == 200
+        # THE fix: the gateway must hit the EXACT stored URL — no '/data' suffix.
+        assert seen == ["https://api-soilsensor1.kolab.top/api/sensor/latest"], seen
     finally:
         app.dependency_overrides.pop(get_gateway_service, None)
 

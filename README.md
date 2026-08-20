@@ -74,20 +74,82 @@ Open **http://localhost:3000** → password **`123456`** → Hardware → Routes
 > 0 routes, 0 keys) + your `123456` account — exactly the state the one-command
 > installer ships. Run `seed.py` only if you want demo data.
 
-## Reset workspace data (wipe everything, keep your account)
+## Quick start (Local — No Docker)
 
-```bash
-docker compose up -d --build backend   # once — ships reset_data.py into the image
-docker compose exec backend python reset_data.py
+Run JagoRoute directly on your machine without Docker.
+
+### Prerequisites
+
+| Tool | Version | Download |
+|------|---------|----------|
+| Python | 3.11+ | https://www.python.org/downloads/ |
+| Node.js | 18+ | https://nodejs.org/ |
+| PostgreSQL | 14+ | https://www.postgresql.org/download/windows/ |
+| Redis | 7+ | https://github.com/tporadowski/redis/releases |
+| Git | any | https://git-scm.com/downloads |
+
+### Windows (PowerShell)
+
+```powershell
+# One-command install (sets up everything):
+irm https://route.jagoai.dev/install.ps1 | iex
+
+# Or manually:
+git clone https://github.com/JohanesDarren/JagoRoute.git
+cd JagoRoute
+
+# Backend
+cd backend
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy .env.example .env
+uvicorn app.main:app --reload --port 8000
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev
 ```
 
-> The script ships inside the backend image, so any container built before
-> `reset_data.py` existed needs the one-time rebuild above.
+### macOS / Linux
 
-Deletes all hardware, routes, route mappings, API keys, and request logs —
-**user accounts are kept** (login/password still work). Use this before
-re-hosting or whenever you want a clean slate. The Redis route cache is
-flushed too, so deleted routes vanish immediately.
+```bash
+# One-command install:
+curl -s https://raw.githubusercontent.com/JohanesDarren/JagoRoute/main/frontend/public/install.sh | bash
+
+# Or manually:
+git clone https://github.com/JohanesDarren/JagoRoute.git
+cd JagoRoute
+
+# Backend
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload --port 8000
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+### Using the CLI (local mode)
+
+```bash
+# Install the CLI globally
+npm install -g jagoroute
+
+# Start locally (no Docker)
+jagorouter --local
+
+# Stop local processes
+jagorouter stop --local
+```
+
+Open **http://localhost:3000** → password **`123456`**
 
 ## One-command install (self-host)
 
@@ -105,28 +167,29 @@ JagoRoute is one-command installable, 9router-style. The login page's
   clones the repo, copies `.env.example` → `.env`, runs `docker compose up -d
   --build`, prints the URL. Also `jagorouter stop | logs | status | update`
   (install globally with `npm i -g jagoroute`).
-- The **installer scripts** check Docker + Git, clone the public repo, and start
-  the stack the same way.
+- The **no-Node installer scripts** (`install.sh` / `install.ps1`) set up a
+  **local stack without Docker**: they check Python/Node/PostgreSQL/Redis/Git,
+  clone the repo, create the Python venv + npm deps, and prepare the database.
+  Start everything with:
+  - macOS / Linux: `cd JagoRoute && bash scripts/start-local.sh`
+  - Windows: `cd JagoRoute; .\scripts\start-local.ps1`
 - Either way, open **http://localhost:3000** → password **`123456`**. Fresh
   installs start with an **empty workspace** (no demo data).
 
-## Local development (no Docker)
+## Reset workspace data (wipe everything, keep your account)
 
-**Backend** (needs Python 3.11+):
 ```bash
-cd backend
-py -3.13 -m pip install -r requirements-dev.txt
-copy .env.example .env        # set DATABASE_URL (Postgres or SQLite)
-py -3.13 -m uvicorn app.main:app --reload --port 8000
+docker compose up -d --build backend   # once — ships reset_data.py into the image
+docker compose exec backend python reset_data.py
 ```
 
-**Frontend**:
-```bash
-cd frontend
-npm install
-copy .env.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:8000
-npm run dev                    # http://localhost:3000
-```
+> The script ships inside the backend image, so any container built before
+> `reset_data.py` existed needs the one-time rebuild above.
+
+Deletes all hardware, routes, route mappings, API keys, and request logs —
+**user accounts are kept** (login/password still work). Use this before
+re-hosting or whenever you want a clean slate. The Redis route cache is
+flushed too, so deleted routes vanish immediately.
 
 ## Unified gateway endpoint (for the software team)
 

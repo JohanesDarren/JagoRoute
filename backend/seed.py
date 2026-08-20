@@ -9,13 +9,13 @@ never deletes entries, so it does not migrate legacy renames (e.g. an old
 
 Creates (idempotently):
   * workspace user (default demo@jago.io / 123456, from ADMIN_* settings)
-  * 3 hardware endpoints pointing at in-app mock devices (so routing "just works")
-  * 1 Ecowitt weather station hardware (base_url only — credentials go in
-    "Query params" via the dashboard or scripts/update-ecowitt-route.sh)
-  * 2 BMKG open-data hardware (weather forecast + latest earthquake; the
-    weather one needs an adm4 region code added via Hardware → Query params)
-  * routes: "all-sensors", "system-status", "weather_station_only",
-    "bmkg-weather", "bmkg-gempa"
+  * 4 hardware endpoints:
+      - soil_npk_sensor  -> BESTARI soil NPK sensor (full endpoint in base_url)
+      - bmkg_weather     -> BMKG open-data weather forecast
+      - bmkg_gempa       -> BMKG latest earthquake
+      - Weather Mini Station -> Ecowitt WS2320CE (base_url only; credentials go
+        in "Query params" via the dashboard or scripts/update-ecowitt-route.sh)
+  * routes: "soil-npk", "bmkg-weather", "bmkg-gempa", "weather_station_only"
   * one API key (printed at the end)
 """
 import uuid  # noqa: F401  (used by models at import time)
@@ -32,36 +32,12 @@ _settings = get_settings()
 DEMO_EMAIL = _settings.ADMIN_EMAIL
 DEMO_PASSWORD = _settings.ADMIN_PASSWORD
 
-# In-docker the backend reaches itself via the compose service name "backend".
-MOCK_BASE = "http://backend:8000/mock-devices"
-
 # name -> (base_url, description)
 HARDWARE_DEFS = {
-    "esp32_sensor_a": (
-        f"{MOCK_BASE}/esp32",
-        "ESP32 temperature & humidity (mock device)",
+    "soil_npk_sensor": (
+        "https://api-soilsensor1.kolab.top/api/sensor/latest",
+        "BESTARI soil NPK sensor - nitrogen, phosphorus, potassium, pH, moisture (full endpoint in base_url)",
     ),
-    "raspberry_pi_1": (
-        f"{MOCK_BASE}/rpi",
-        "Raspberry Pi CPU / stats monitor (mock device)",
-    ),
-    "ip_camera_1": (
-        f"{MOCK_BASE}/camera",
-        "IP camera stream API (mock device)",
-    ),
-    # Ecowitt WS2320CE weather station. base_url is the API ROOT only — the
-    # gateway appends target_path (/device/real_time). Real credentials are
-    # added per-install via the dashboard (Hardware → Query params) or
-    # app_stasiun_mini/scripts/update-ecowitt-route.sh — never committed here.
-    "Weather Mini Station": (
-        "https://api.ecowitt.net/api/v3",
-        "Ecowitt WS2320CE — add lowercase query params application_key/api_key/mac",
-    ),
-    # BMKG open data — official public API (no API key; credit "BMKG" in any UI).
-    # The weather hardware needs the region code: Hardware → Query params →
-    #   adm4 = <kemendagri kelurahan/desa code>
-    #   e.g. 31.71.03.1001 = Kemayoran (Jakarta Pusat)
-    #        32.04.12.2006 = Citeureup, Dayeuhkolot, Bandung (Telkom University)
     "bmkg_weather": (
         "https://api.bmkg.go.id/publik",
         "BMKG open data - prakiraan cuaca. Set adm4 in Query params (sumber: BMKG)",
@@ -70,39 +46,37 @@ HARDWARE_DEFS = {
         "https://data.bmkg.go.id",
         "BMKG open data - gempabumi terbaru (sumber: BMKG)",
     ),
+    "Weather Mini Station": (
+        "https://api.ecowitt.net/api/v3",
+        "Ecowitt WS2320CE - add lowercase query params application_key/api_key/mac",
+    ),
 }
 
 ROUTE_DEFS = {
-    "all-sensors": {
-        "description": "Aggregated environment + system data",
+    "soil-npk": {
+        "description": "Soil NPK sensor readings - nitrogen, phosphorus, potassium, pH, moisture",
         "mappings": [
-            {"name": "esp32_sensor_a", "target_path": "/sensors", "method": "GET"},
-            {"name": "raspberry_pi_1", "target_path": "/stats", "method": "GET"},
-        ],
-    },
-    "system-status": {
-        "description": "Infrastructure health from every device",
-        "mappings": [
-            {"name": "raspberry_pi_1", "target_path": "/stats", "method": "GET"},
-            {"name": "ip_camera_1", "target_path": "/status", "method": "GET"},
-        ],
-    },
-    "weather_station_only": {
-        "description": "Ecowitt weather station — live readings via /device/real_time",
-        "mappings": [
-            {"name": "Weather Mini Station", "target_path": "/device/real_time", "method": "GET"},
+            # base_url already contains the FULL endpoint; target_path is empty
+            # so the gateway calls base_url exactly as stored (no suffix).
+            {"name": "soil_npk_sensor", "target_path": "", "method": "GET"},
         ],
     },
     "bmkg-weather": {
-        "description": "BMKG prakiraan cuaca — set adm4 (region) on bmkg_weather via Hardware → Query params (sumber: BMKG)",
+        "description": "BMKG prakiraan cuaca - set adm4 (region) on bmkg_weather via Hardware -> Query params (sumber: BMKG)",
         "mappings": [
             {"name": "bmkg_weather", "target_path": "/prakiraan-cuaca", "method": "GET"},
         ],
     },
     "bmkg-gempa": {
-        "description": "BMKG latest earthquake (autogempa.json) — sumber: BMKG",
+        "description": "BMKG latest earthquake (autogempa.json) - sumber: BMKG",
         "mappings": [
             {"name": "bmkg_gempa", "target_path": "/DataMKG/TEWS/autogempa.json", "method": "GET"},
+        ],
+    },
+    "weather_station_only": {
+        "description": "Ecowitt weather station - live readings via /device/real_time",
+        "mappings": [
+            {"name": "Weather Mini Station", "target_path": "/device/real_time", "method": "GET"},
         ],
     },
 }
@@ -178,8 +152,8 @@ def main() -> None:
     finally:
         db.close()
     print("\nSeed complete. Login:")
-    print("  • Local app login (password only): 123456 (admin@jagoroute.io)")
-    print("  • Email login (demo workspace):    demo@jago.io / demo1234")
+    print(f"  • Email: {DEMO_EMAIL}")
+    print(f"  • Password: {DEMO_PASSWORD}  (password-only login also accepts just this)")
 
 
 if __name__ == "__main__":
