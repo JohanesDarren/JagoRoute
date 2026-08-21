@@ -7,6 +7,8 @@ from app.core.database import get_db
 from app.models.user import User
 from app.schemas.hardware import HardwareCreate, HardwareOut, HardwareUpdate
 from app.services import hardware_service
+import httpx
+import time
 
 router = APIRouter(prefix="/hardware", tags=["hardware"])
 
@@ -56,3 +58,34 @@ def delete_hardware(
     db: Session = Depends(get_db),
 ) -> None:
     hardware_service.delete_endpoint(db, current_user.id, hardware_id)
+
+
+@router.post("/{hardware_id}/ping")
+async def ping_hardware(
+    hardware_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    endpoint = hardware_service.get_endpoint(db, current_user.id, hardware_id)
+    start = time.perf_counter()
+    url = endpoint.base_url.rstrip("/")
+    headers = endpoint.auth_headers or {}
+    params = endpoint.query_params or {}
+    
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(url, headers=headers, params=params)
+            elapsed = int((time.perf_counter() - start) * 1000)
+            return {
+                "success": True,
+                "status_code": resp.status_code,
+                "response_time_ms": elapsed,
+            }
+    except httpx.HTTPError as exc:
+        elapsed = int((time.perf_counter() - start) * 1000)
+        return {
+            "success": False,
+            "status_code": 0,
+            "response_time_ms": elapsed,
+            "error": type(exc).__name__,
+        }

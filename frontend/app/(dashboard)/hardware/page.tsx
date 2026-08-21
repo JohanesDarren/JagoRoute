@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Cpu, Waypoints, KeyRound, ArrowRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Cpu, Waypoints, KeyRound, ArrowRight, Activity, Loader2 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import Modal from "@/components/Modal";
 import { api, ApiError } from "@/lib/api";
@@ -34,6 +34,29 @@ export default function HardwarePage() {
   const [editing, setEditing] = useState<Hardware | null>(null);
   const [form, setForm] = useState<HardwareFormState>(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [pingStatus, setPingStatus] = useState<Record<string, 'loading' | { success: boolean, msg: string }>>({});
+
+  async function ping(h: Hardware) {
+    setPingStatus(prev => ({ ...prev, [h.id]: 'loading' }));
+    try {
+      const res = await api<{ success: boolean; status_code: number; response_time_ms: number; error?: string }>(`/hardware/${h.id}/ping`, { method: "POST" });
+      if (res.success) {
+        setPingStatus(prev => ({ ...prev, [h.id]: { success: true, msg: `${res.status_code} OK (${res.response_time_ms}ms)` } }));
+      } else {
+        setPingStatus(prev => ({ ...prev, [h.id]: { success: false, msg: `Error: ${res.error}` } }));
+      }
+    } catch (e) {
+      setPingStatus(prev => ({ ...prev, [h.id]: { success: false, msg: e instanceof ApiError ? e.message : "Failed to ping" } }));
+    }
+    // Clear status after 4 seconds
+    setTimeout(() => {
+      setPingStatus(prev => {
+        const next = { ...prev };
+        delete next[h.id];
+        return next;
+      });
+    }, 4000);
+  }
 
   async function load() {
     try {
@@ -236,21 +259,44 @@ export default function HardwarePage() {
                 </div>
               </div>
 
-              <div className="mt-auto flex justify-end gap-2 border-t border-outline-variant/50 pt-3">
-                <button
-                  onClick={() => openEdit(h)}
-                  className="rounded px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant transition-colors hover:text-primary"
-                >
-                  <Pencil className="mr-1 inline h-3.5 w-3.5" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => remove(h)}
-                  className="rounded p-1 text-error transition-colors hover:bg-error-container"
-                  title="Delete hardware"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+              <div className="mt-auto flex items-center justify-between border-t border-outline-variant/50 pt-3">
+                <div className="text-[10px] font-mono">
+                  {pingStatus[h.id] === 'loading' && (
+                    <span className="flex items-center gap-1 text-on-surface-variant">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Pinging...
+                    </span>
+                  )}
+                  {pingStatus[h.id] && pingStatus[h.id] !== 'loading' && (
+                    <span className={cn("flex items-center gap-1 font-semibold", (pingStatus[h.id] as any).success ? "text-primary" : "text-error")}>
+                      {(pingStatus[h.id] as any).msg}
+                    </span>
+                  )}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => ping(h)}
+                    disabled={pingStatus[h.id] === 'loading'}
+                    className="rounded px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant transition-colors hover:text-primary disabled:opacity-50"
+                    title="Test Connection"
+                  >
+                    <Activity className="mr-1 inline h-3.5 w-3.5" />
+                    Ping
+                  </button>
+                  <button
+                    onClick={() => openEdit(h)}
+                    className="rounded px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-on-surface-variant transition-colors hover:text-primary"
+                  >
+                    <Pencil className="mr-1 inline h-3.5 w-3.5" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => remove(h)}
+                    className="rounded p-1 text-error transition-colors hover:bg-error-container"
+                    title="Delete hardware"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
