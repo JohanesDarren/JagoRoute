@@ -18,9 +18,11 @@ def _sensor_handler(request):
 
         raise _h.ConnectError("connection refused")
     if request.url.host == "esp32":
-        return Response(200, json={"temperature": 24.5, "humidity": 60})
+        # Includes device_id so it ends up under "node-esp32" in the grouped response
+        return Response(200, json={"device_id": "node-esp32", "temperature": 24.5, "humidity": 60})
     if request.url.host == "rpi":
-        return Response(200, json={"cpu_load": "45%", "status": "online"})
+        # Includes device_id so it ends up under "node-rpi" in the grouped response
+        return Response(200, json={"device_id": "node-rpi", "cpu_load": "45%", "status": "online"})
     return Response(404, json={"error": "not found"})
 
 
@@ -51,9 +53,13 @@ async def test_gateway_aggregates_multiple_hardware(client: AsyncClient, db):
         payload = resp.json()
         assert payload["status"] == "success"
         assert payload["route"] == "all-sensors"
-        assert "esp32_sensor_a" in payload["data"]
-        assert payload["data"]["esp32_sensor_a"]["data"]["temperature"] == 24.5
-        assert "raspberry_pi_1" in payload["data"]
+        # New structure: data is grouped by device_id first, then hardware_name
+        data_by_device = payload["data"]
+        assert "node-esp32" in data_by_device, f"Expected 'node-esp32' in {list(data_by_device.keys())}"
+        assert "esp32_sensor_a" in data_by_device["node-esp32"]
+        assert data_by_device["node-esp32"]["esp32_sensor_a"]["data"]["temperature"] == 24.5
+        assert "node-rpi" in data_by_device, f"Expected 'node-rpi' in {list(data_by_device.keys())}"
+        assert "raspberry_pi_1" in data_by_device["node-rpi"]
     finally:
         app.dependency_overrides.pop(get_gateway_service, None)
 
@@ -137,7 +143,10 @@ async def test_gateway_exact_url_no_data_suffix(client: AsyncClient, db):
         assert resp.status_code == 200
         payload = resp.json()
         assert payload["status"] == "success"
-        assert payload["data"]["soil_npk_sensor"]["status_code"] == 200
+        # New structure: grouped by device_id; payload has no device_id → falls under "unknown"
+        data_by_device = payload["data"]
+        all_sensors = {hw: v for device in data_by_device.values() for hw, v in device.items()}
+        assert all_sensors["soil_npk_sensor"]["status_code"] == 200
         # THE fix: the gateway must hit the EXACT stored URL — no '/data' suffix.
         assert seen == ["https://api-soilsensor1.kolab.top/api/sensor/latest"], seen
     finally:

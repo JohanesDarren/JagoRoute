@@ -55,6 +55,29 @@ def _route_from_cache(db: Session, route_path: str) -> dict | None:
         return None
 
 
+def _extract_device_id(payload: Any, _depth: int = 0) -> str:
+    """Recursively search for 'device_id' inside a response payload.
+
+    Handles varying API wrapper shapes, e.g.:
+      - Flat:                     {"device_id": "node-01", ...}
+      - Single-wrap:              {"data": {"device_id": "node-01", ...}}
+      - Double-wrap (common):     {"success": true, "data": {"data": {"device_id": "node-01"}}}
+
+    Stops after 3 levels of nesting to avoid runaway recursion.
+    Returns "unknown" when device_id is not found anywhere.
+    """
+    if not isinstance(payload, dict) or _depth > 3:
+        return "unknown"
+    if "device_id" in payload:
+        return str(payload["device_id"])
+    # Recurse into dict values (prioritises "data" key first for speed)
+    for key in ("data", *[k for k in payload if k != "data"]):
+        result = _extract_device_id(payload.get(key), _depth + 1)
+        if result != "unknown":
+            return result
+    return "unknown"
+
+
 class GatewayService:
     """Per-request service resolving routes and proxying to hardware."""
 
@@ -84,8 +107,19 @@ class GatewayService:
         return serialized
 
     async def proxy(self, route: dict, method: str, body: bytes | dict | None) -> tuple[dict, bool, list[str]]:
-        """Fan out to all mapped hardware. Returns (data, all_ok, errors)."""
-        data: dict[str, Any] = {}
+        """Fan out to all mapped hardware. Returns (data_by_device, all_ok, errors).
+
+        Response structure groups sensors by device_id:
+            {
+                "node-01": {
+                    "NPK Soil Sensor": {"status_code": 200, "data": {...}},
+                    ...
+                },
+                "node-02": { ... },
+                "unknown": { ... }   # fallback when device_id not found in payload
+            }
+        """
+        raw: dict[str, Any] = {}   # hardware_name -> {status_code, data}
         errors: list[str] = []
 
         async with self._client() as client:
@@ -112,13 +146,13 @@ class GatewayService:
                         payload = response.json()
                     except ValueError:
                         payload = response.text
-                    data[mapping["hardware_name"]] = {
+                    raw[mapping["hardware_name"]] = {
                         "status_code": response.status_code,
                         "data": payload,
                     }
                 except httpx.HTTPError as exc:
                     errors.append(f"{mapping['hardware_name']}: {type(exc).__name__}")
-                    data[mapping["hardware_name"]] = {
+                    raw[mapping["hardware_name"]] = {
                         "status_code": 0,
                         "error": "unreachable",
                     }
@@ -127,7 +161,16 @@ class GatewayService:
 
             await asyncio.gather(*(call_one(m) for m in route["mappings"]))
 
-        return data, not errors, errors
+        # ── Group results by device_id ──────────────────────────────────────
+        # Extract device_id from the response payload (search recursively one
+        # level deep to handle varying wrapper shapes like {success, data:{...}}).
+        # Falls back to "unknown" so the route never crashes on missing field.
+        grouped: dict[str, Any] = {}
+        for hw_name, hw_result in raw.items():
+            device_id = _extract_device_id(hw_result.get("data"))
+            grouped.setdefault(device_id, {})[hw_name] = hw_result
+
+        return grouped, not errors, errors
 
     async def route_request(
         self,
